@@ -53,6 +53,7 @@
     ['closed', 'Closed days', 'owner'],
     ['promos', 'Promos', 'mgr'],
     ['shop', 'Shop settings', 'owner'],
+    ['browser', 'Browser access', 'owner'],
     ['activity', 'Activity', 'owner']
   ];
   const role = () => (D && D.me && D.me.role) || '';
@@ -92,7 +93,26 @@
     if (tab === 'closed') return renderClosed();
     if (tab === 'promos') return renderPromos();
     if (tab === 'shop') return renderShop();
+    if (tab === 'browser') return renderBrowser();
     if (tab === 'activity') return renderActivity();
+  }
+
+  // Browser access (owner): a SEPARATE password lets a browser use the POS; the Unruly POS app never needs it.
+  async function renderBrowser() {
+    let j;
+    try { j = await api('browser', { op: 'status' }); } catch (e) { view.innerHTML = '<div class="note">' + esc(e.message) + '</div>'; return; }
+    const dev = j.devices || [];
+    view.innerHTML = '<h2>Browser access</h2><div class="note">The Unruly POS app is the POS. A normal browser can only use it with this separate browser-access password (not a PIN). Mode now: <b>' + (j.enforce ? 'ENFORCED (browsers without a pass are refused)' : 'log-only (nothing is refused yet)') + '</b>. The switch is set on the shop PC, not here.</div>' +
+      '<div class="card"><p>Browser-access password: <b>' + (j.passwordSet ? 'set ' + esc(String(j.passwordSetAt).slice(0, 10)) : 'not set (browsers cannot get in)') + '</b></p>' +
+      '<button class="btn primary" id="baNew" type="button">' + (j.passwordSet ? 'Rotate password' : 'Create password') + '</button> <label class="small"><input type="checkbox" id="baRev" checked> sign out all browsers when rotating</label><div id="baShow"></div></div>' +
+      '<h3>Browsers allowed</h3><div class="card"><div class="scroll"><table class="t"><tr><th>Browser</th><th>Added</th><th>Last seen</th><th></th></tr>' +
+      (dev.length ? dev.map((d) => '<tr><td>' + esc(d.label) + (d.revoked ? ' <span class="tag collected">revoked</span>' : '') + '</td><td>' + esc(String(d.created).slice(0, 16).replace('T', ' ')) + '</td><td>' + esc(String(d.lastSeen || '-').slice(0, 16).replace('T', ' ')) + '</td><td>' + (d.revoked ? '' : '<button class="btn sm" data-barev="' + esc(d.id) + '" type="button">Revoke</button>') + '</td></tr>').join('') : '<tr><td colspan="4" class="muted">None yet.</td></tr>') +
+      '</table></div></div><h3>Clients seen (log)</h3><div class="card small">' + ((j.seen || []).map((s) => esc(s.client) + ': ' + s.count + ' (last ' + esc(String(s.last).slice(0, 16).replace('T', ' ')) + ')').join('<br>') || 'nothing yet') + '</div>';
+    baNew.onclick = async () => {
+      try { const r = await api('browser', { op: 'set-password', revokeDevices: baRev.checked }); baShow.innerHTML = '<div class="note">New browser-access password (shown once, write it down): <b style="font-size:1.3rem;letter-spacing:.05em">' + esc(r.password) + '</b></div>'; }
+      catch (e) { toast(e.message); }
+    };
+    document.querySelectorAll('[data-barev]').forEach((b) => { b.onclick = async () => { try { await api('browser', { op: 'revoke', id: b.dataset.barev }); toast('Revoked.'); renderBrowser(); } catch (e) { toast(e.message); } }; });
   }
 
   async function renderStaff() {

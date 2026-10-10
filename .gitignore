@@ -1,0 +1,7 @@
+# POS live data never goes in this public repo (it lives on the shop PC).
+pos.json
+pos.json.bak
+pos-token.txt
+pos-backups/
+*.jsonl
+.env

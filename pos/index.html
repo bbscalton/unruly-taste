@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unruly Taste · POS</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#111111">
+<link rel="icon" href="../images/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+<link rel="stylesheet" href="pos.css">
+</head>
+<body>
+<div class="top-banner"><b>POS</b> · cash only · costs are <b>market estimates / examples</b>, portions estimated, vendors placeholders, until the owner confirms real numbers</div>
+<header class="top">
+  <div class="brand"><img class="logo" src="../images/logo.webp" alt="Unruly Taste" width="62" height="48"><div><b class="pos-title">Point of Sale</b><span id="syncState" class="sync">connecting…</span></div></div>
+  <div class="top-acts"><button id="adminBtn" class="helpbtn" type="button" title="Open Admin (owner or manager PIN)"><span aria-hidden="true">🔑</span><em>Admin</em></button><button id="signOutBtn" class="helpbtn" type="button" title="Sign out of this till"><span aria-hidden="true">↩</span><em>Out</em></button><button class="helpbtn" type="button" data-help title="Help &amp; FAQ" aria-label="Help and FAQ"><span>?</span><em>Help</em></button><button class="pqbtn" id="pqBtn" type="button" title="Print queue (receipts)" aria-label="Print queue"><span>🖨️</span><i id="pqCount" class="hidden">0</i></button><button class="bell" id="bell" type="button" title="Low stock"><span>🔔</span><i id="bellCount" class="hidden">0</i></button></div>
+</header>
+<nav class="tabs" id="tabs" aria-label="POS sections">
+  <button data-tab="orders" class="on" aria-current="page"><em class="ti" aria-hidden="true">🧾</em><span>Orders</span><i id="openCount" class="cnt hidden"></i></button>
+  <button data-tab="walkin"><em class="ti" aria-hidden="true">💵</em><span>Walk-in</span></button>
+  <button data-tab="stock"><em class="ti" aria-hidden="true">📦</em><span>Stock</span><i id="lowCount" class="cnt warn hidden"></i></button>
+  <button data-tab="today"><em class="ti" aria-hidden="true">📊</em><span>Today</span></button>
+</nav>
+<main>
+  <section id="tab-orders" class="tab"></section>
+  <section id="tab-walkin" class="tab hidden"></section>
+  <section id="tab-stock" class="tab hidden"></section>
+  <section id="tab-today" class="tab hidden"></section>
+</main>
+<div id="sheet" class="sheet hidden" role="dialog" aria-modal="true"><div class="sheet-panel" id="sheetPanel"></div></div>
+<div id="login" class="login hidden">
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <img class="logo big" src="../images/logo.webp" alt="Unruly Taste" width="124" height="96">
+    <h1>Staff sign-in</h1>
+    <p>Enter the staff PIN for this POS. It is saved on this device only.</p>
+    <input id="pin" type="password" placeholder="Staff PIN" autocomplete="current-password" required>
+    <button class="btn primary big" type="submit">Sign in</button>
+    <p class="err" id="loginErr"></p>
+    <button class="linkbtn" type="button" data-help>❓ Help &amp; FAQ (signing in, PIN, lockout)</button>
+  </form>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<div id="printArea" aria-hidden="true"></div>
+<script src="../config.js"></script>
+<script src="../menu.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="receipt.js"></script>
+<script src="printer/driver.js"></script>
+<script src="pos.js"></script>
+<script src="faq.js"></script>
+</body>
+</html>

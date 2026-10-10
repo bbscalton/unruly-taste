@@ -1,0 +1,300 @@
+# Unruly Taste POS: owner sheet answers. Fill the blanks, keep the first column. Blank = keep the current value. Numbers only (no G$).
+# ingredient,name,unit,cost per unit (G$),supplier name,supplier phone,current stock,minimum,minimum type (qty|servings)
+ingredient,Chicken wings,kg,,,,,,qty
+ingredient,Chicken strips (boneless),kg,,,,,,qty
+ingredient,Chicken burger patty,each,,,,,,qty
+ingredient,Flour / breading mix,kg,,,,,,qty
+ingredient,Cooking oil,L,,,,,,qty
+ingredient,"Fries (frozen, straight-cut)",kg,,,,,,qty
+ingredient,Macaroni,kg,,,,,,qty
+ingredient,Cheese,kg,,,,,,qty
+ingredient,Waffle mix,kg,,,,,,qty
+ingredient,Plantain,each,,,,,,qty
+ingredient,Burger bun,each,,,,,,qty
+ingredient,Tortilla wrap,each,,,,,,qty
+ingredient,Wing sauce (all 6 in-house sauces),L,,,,,,qty
+ingredient,Dipping sauce,L,,,,,,qty
+ingredient,Refresher drink,each,,,,,,qty
+ingredient,Takeout box (small),each,,,,,,qty
+ingredient,Takeout box (large),each,,,,,,qty
+ingredient,Chicken leg quarters,kg,,,,,,qty
+ingredient,Fish fillet (banga mary),kg,,,,,,qty
+ingredient,Potato wedges (frozen),kg,,,,,,qty
+ingredient,Penne pasta,kg,,,,,,qty
+ingredient,Cooking cream,L,,,,,,qty
+ingredient,Sweet peppers,kg,,,,,,qty
+ingredient,"Rice (white, long grain)",kg,,,,,,qty
+ingredient,Sweet corn kernels (canned),kg,,,,,,qty
+ingredient,Corn on the cob,each,,,,,,qty
+ingredient,Beef burger patty,each,,,,,,qty
+ingredient,Vanilla ice cream,L,,,,,,qty
+ingredient,Milk (full cream),L,,,,,,qty
+ingredient,Drink cup with lid (16 oz),each,,,,,,qty
+ingredient,Milkshake flavouring (syrup / cookies),each,,,,,,qty
+ingredient,Local juice (house-made),each,,,,,,qty
+# recipe,menu item,ingredient name,qty per serving (in the ingredient's unit: kg / L / each),only if choice contains (optional)
+recipe,Thursday Double Bubble,Burger bun,,Hot Box
+recipe,Thursday Double Bubble,Chicken burger patty,,Hot Box
+recipe,Thursday Double Bubble,Flour / breading mix,,Hot Box
+recipe,Thursday Double Bubble,Cooking oil,,Hot Box
+recipe,Thursday Double Bubble,Tortilla wrap,,Wrap Box
+recipe,Thursday Double Bubble,Chicken strips (boneless),,Wrap Box
+recipe,Thursday Double Bubble,Flour / breading mix,,Wrap Box
+recipe,Thursday Double Bubble,Cooking oil,,Wrap Box
+recipe,Thursday Double Bubble,"Fries (frozen, straight-cut)",,
+recipe,Thursday Double Bubble,Cooking oil,,
+recipe,Thursday Double Bubble,Macaroni,,
+recipe,Thursday Double Bubble,Cheese,,
+recipe,Thursday Double Bubble,Chicken wings,,Wings
+recipe,Thursday Double Bubble,Flour / breading mix,,Wings
+recipe,Thursday Double Bubble,Cooking oil,,Wings
+recipe,Thursday Double Bubble,Wing sauce (all 6 in-house sauces),,Wings
+recipe,Thursday Double Bubble,Chicken strips (boneless),,Strip chicken
+recipe,Thursday Double Bubble,Flour / breading mix,,Strip chicken
+recipe,Thursday Double Bubble,Cooking oil,,Strip chicken
+recipe,Thursday Double Bubble,Takeout box (large),,
+recipe,Friday Mega Meal,Burger bun,,Hot Box
+recipe,Friday Mega Meal,Chicken burger patty,,Hot Box
+recipe,Friday Mega Meal,Flour / breading mix,,Hot Box
+recipe,Friday Mega Meal,Cooking oil,,Hot Box
+recipe,Friday Mega Meal,Tortilla wrap,,Wrap Box
+recipe,Friday Mega Meal,Chicken strips (boneless),,Wrap Box
+recipe,Friday Mega Meal,Flour / breading mix,,Wrap Box
+recipe,Friday Mega Meal,Cooking oil,,Wrap Box
+recipe,Friday Mega Meal,"Fries (frozen, straight-cut)",,
+recipe,Friday Mega Meal,Cooking oil,,
+recipe,Friday Mega Meal,Macaroni,,
+recipe,Friday Mega Meal,Cheese,,
+recipe,Friday Mega Meal,Chicken wings,,Wings
+recipe,Friday Mega Meal,Flour / breading mix,,Wings
+recipe,Friday Mega Meal,Cooking oil,,Wings
+recipe,Friday Mega Meal,Wing sauce (all 6 in-house sauces),,Wings
+recipe,Friday Mega Meal,Chicken strips (boneless),,Strip chicken
+recipe,Friday Mega Meal,Flour / breading mix,,Strip chicken
+recipe,Friday Mega Meal,Cooking oil,,Strip chicken
+recipe,Friday Mega Meal,Refresher drink,,
+recipe,Friday Mega Meal,Drink cup with lid (16 oz),,
+recipe,Friday Mega Meal,Takeout box (large),,
+recipe,Rasta Pasta (Friday Special),Penne pasta,,
+recipe,Rasta Pasta (Friday Special),Cooking cream,,
+recipe,Rasta Pasta (Friday Special),Sweet peppers,,
+recipe,Rasta Pasta (Friday Special),Cheese,,
+recipe,Rasta Pasta (Friday Special),Chicken wings,,Wings
+recipe,Rasta Pasta (Friday Special),Flour / breading mix,,Wings
+recipe,Rasta Pasta (Friday Special),Cooking oil,,Wings
+recipe,Rasta Pasta (Friday Special),Wing sauce (all 6 in-house sauces),,Wings
+recipe,Rasta Pasta (Friday Special),Chicken strips (boneless),,Strip chicken
+recipe,Rasta Pasta (Friday Special),Flour / breading mix,,Strip chicken
+recipe,Rasta Pasta (Friday Special),Cooking oil,,Strip chicken
+recipe,Rasta Pasta (Friday Special),Takeout box (large),,
+recipe,Unruly Box,Chicken strips (boneless),,
+recipe,Unruly Box,Flour / breading mix,,
+recipe,Unruly Box,Cooking oil,,
+recipe,Unruly Box,"Fries (frozen, straight-cut)",,
+recipe,Unruly Box,Macaroni,,
+recipe,Unruly Box,Cheese,,
+recipe,Unruly Box,Takeout box (large),,
+recipe,Unruly Box with Wings,Chicken wings,,
+recipe,Unruly Box with Wings,Flour / breading mix,,
+recipe,Unruly Box with Wings,Cooking oil,,
+recipe,Unruly Box with Wings,Wing sauce (all 6 in-house sauces),,
+recipe,Unruly Box with Wings,"Fries (frozen, straight-cut)",,
+recipe,Unruly Box with Wings,Macaroni,,
+recipe,Unruly Box with Wings,Cheese,,
+recipe,Unruly Box with Wings,Takeout box (large),,
+recipe,Unruly Hot Box,Burger bun,,
+recipe,Unruly Hot Box,Chicken burger patty,,
+recipe,Unruly Hot Box,Flour / breading mix,,
+recipe,Unruly Hot Box,Cooking oil,,
+recipe,Unruly Hot Box,"Fries (frozen, straight-cut)",,
+recipe,Unruly Hot Box,Macaroni,,
+recipe,Unruly Hot Box,Cheese,,
+recipe,Unruly Hot Box,Chicken wings,,Wings
+recipe,Unruly Hot Box,Flour / breading mix,,Wings
+recipe,Unruly Hot Box,Cooking oil,,Wings
+recipe,Unruly Hot Box,Wing sauce (all 6 in-house sauces),,Wings
+recipe,Unruly Hot Box,Chicken strips (boneless),,Strip chicken
+recipe,Unruly Hot Box,Flour / breading mix,,Strip chicken
+recipe,Unruly Hot Box,Cooking oil,,Strip chicken
+recipe,Unruly Hot Box,Takeout box (large),,
+recipe,Unruly Wrap Box,Tortilla wrap,,
+recipe,Unruly Wrap Box,Chicken strips (boneless),,
+recipe,Unruly Wrap Box,Flour / breading mix,,
+recipe,Unruly Wrap Box,Cooking oil,,
+recipe,Unruly Wrap Box,"Fries (frozen, straight-cut)",,
+recipe,Unruly Wrap Box,Macaroni,,
+recipe,Unruly Wrap Box,Cheese,,
+recipe,Unruly Wrap Box,Chicken wings,,Wings
+recipe,Unruly Wrap Box,Flour / breading mix,,Wings
+recipe,Unruly Wrap Box,Cooking oil,,Wings
+recipe,Unruly Wrap Box,Wing sauce (all 6 in-house sauces),,Wings
+recipe,Unruly Wrap Box,Chicken strips (boneless),,Strip chicken
+recipe,Unruly Wrap Box,Flour / breading mix,,Strip chicken
+recipe,Unruly Wrap Box,Cooking oil,,Strip chicken
+recipe,Unruly Wrap Box,Takeout box (large),,
+recipe,Deep Fried Leg Quarters (cut up),Chicken leg quarters,,
+recipe,Deep Fried Leg Quarters (cut up),Flour / breading mix,,
+recipe,Deep Fried Leg Quarters (cut up),Cooking oil,,
+recipe,Deep Fried Leg Quarters (cut up),Plantain,,Plantain
+recipe,Deep Fried Leg Quarters (cut up),Cooking oil,,Plantain
+recipe,Deep Fried Leg Quarters (cut up),"Fries (frozen, straight-cut)",,Fries
+recipe,Deep Fried Leg Quarters (cut up),Cooking oil,,Fries
+recipe,Deep Fried Leg Quarters (cut up),Potato wedges (frozen),,Wedges
+recipe,Deep Fried Leg Quarters (cut up),Cooking oil,,Wedges
+recipe,Deep Fried Leg Quarters (cut up),Takeout box (large),,
+recipe,Unruly Bowl,Chicken wings,,Wings
+recipe,Unruly Bowl,Flour / breading mix,,Wings
+recipe,Unruly Bowl,Cooking oil,,Wings
+recipe,Unruly Bowl,Wing sauce (all 6 in-house sauces),,Wings
+recipe,Unruly Bowl,Chicken strips (boneless),,Strip chicken
+recipe,Unruly Bowl,Flour / breading mix,,Strip chicken
+recipe,Unruly Bowl,Cooking oil,,Strip chicken
+recipe,Unruly Bowl,Macaroni,,
+recipe,Unruly Bowl,Cheese,,
+recipe,Unruly Bowl,"Rice (white, long grain)",,
+recipe,Unruly Bowl,Sweet corn kernels (canned),,
+recipe,Unruly Bowl,Sweet peppers,,
+recipe,Unruly Bowl,Takeout box (large),,
+recipe,Burger & Fries,Burger bun,,
+recipe,Burger & Fries,Chicken burger patty,,Chicken
+recipe,Burger & Fries,Flour / breading mix,,Chicken
+recipe,Burger & Fries,Cooking oil,,Chicken
+recipe,Burger & Fries,Beef burger patty,,Beef
+recipe,Burger & Fries,Fish fillet (banga mary),,Fish
+recipe,Burger & Fries,Flour / breading mix,,Fish
+recipe,Burger & Fries,Cooking oil,,Fish
+recipe,Burger & Fries,"Fries (frozen, straight-cut)",,
+recipe,Burger & Fries,Cooking oil,,
+recipe,Burger & Fries,Takeout box (large),,
+recipe,Burger Combo,Burger bun,,
+recipe,Burger Combo,Chicken burger patty,,
+recipe,Burger Combo,Flour / breading mix,,
+recipe,Burger Combo,Cooking oil,,
+recipe,Burger Combo,"Fries (frozen, straight-cut)",,
+recipe,Burger Combo,Macaroni,,
+recipe,Burger Combo,Cheese,,
+recipe,Burger Combo,Chicken wings,,Wings
+recipe,Burger Combo,Flour / breading mix,,Wings
+recipe,Burger Combo,Cooking oil,,Wings
+recipe,Burger Combo,Wing sauce (all 6 in-house sauces),,Wings
+recipe,Burger Combo,Chicken strips (boneless),,Strip chicken
+recipe,Burger Combo,Flour / breading mix,,Strip chicken
+recipe,Burger Combo,Cooking oil,,Strip chicken
+recipe,Burger Combo,Vanilla ice cream,,Milkshake
+recipe,Burger Combo,Milk (full cream),,Milkshake
+recipe,Burger Combo,Milkshake flavouring (syrup / cookies),,Milkshake
+recipe,Burger Combo,Refresher drink,,Refresher
+recipe,Burger Combo,Drink cup with lid (16 oz),,
+recipe,Burger Combo,Takeout box (large),,
+recipe,Wings + Fries + Plantain/Wedges,Chicken wings,,
+recipe,Wings + Fries + Plantain/Wedges,Flour / breading mix,,
+recipe,Wings + Fries + Plantain/Wedges,Cooking oil,,
+recipe,Wings + Fries + Plantain/Wedges,Wing sauce (all 6 in-house sauces),,
+recipe,Wings + Fries + Plantain/Wedges,"Fries (frozen, straight-cut)",,
+recipe,Wings + Fries + Plantain/Wedges,Plantain,,Plantain
+recipe,Wings + Fries + Plantain/Wedges,Cooking oil,,Plantain
+recipe,Wings + Fries + Plantain/Wedges,Potato wedges (frozen),,Wedges
+recipe,Wings + Fries + Plantain/Wedges,Cooking oil,,Wedges
+recipe,Wings + Fries + Plantain/Wedges,Takeout box (large),,
+recipe,12pc Wings Only,Chicken wings,,
+recipe,12pc Wings Only,Flour / breading mix,,
+recipe,12pc Wings Only,Cooking oil,,
+recipe,12pc Wings Only,Wing sauce (all 6 in-house sauces),,
+recipe,12pc Wings Only,Takeout box (small),,
+recipe,Wings + Fries + Mac & Cheese,Chicken wings,,
+recipe,Wings + Fries + Mac & Cheese,Flour / breading mix,,
+recipe,Wings + Fries + Mac & Cheese,Cooking oil,,
+recipe,Wings + Fries + Mac & Cheese,Wing sauce (all 6 in-house sauces),,
+recipe,Wings + Fries + Mac & Cheese,"Fries (frozen, straight-cut)",,
+recipe,Wings + Fries + Mac & Cheese,Macaroni,,
+recipe,Wings + Fries + Mac & Cheese,Cheese,,
+recipe,Wings + Fries + Mac & Cheese,Takeout box (large),,
+recipe,Mac & Cheese with Wings,Chicken wings,,
+recipe,Mac & Cheese with Wings,Flour / breading mix,,
+recipe,Mac & Cheese with Wings,Cooking oil,,
+recipe,Mac & Cheese with Wings,Wing sauce (all 6 in-house sauces),,
+recipe,Mac & Cheese with Wings,Macaroni,,
+recipe,Mac & Cheese with Wings,Cheese,,
+recipe,Mac & Cheese with Wings,Takeout box (large),,
+recipe,Waffles & Wings,Chicken wings,,
+recipe,Waffles & Wings,Flour / breading mix,,
+recipe,Waffles & Wings,Cooking oil,,
+recipe,Waffles & Wings,Wing sauce (all 6 in-house sauces),,
+recipe,Waffles & Wings,Waffle mix,,
+recipe,Waffles & Wings,Takeout box (large),,
+recipe,Deep Fried Banga Fish,Fish fillet (banga mary),,
+recipe,Deep Fried Banga Fish,Flour / breading mix,,
+recipe,Deep Fried Banga Fish,Cooking oil,,
+recipe,Deep Fried Banga Fish,Plantain,,Plantain
+recipe,Deep Fried Banga Fish,Cooking oil,,Plantain
+recipe,Deep Fried Banga Fish,"Fries (frozen, straight-cut)",,Fries
+recipe,Deep Fried Banga Fish,Cooking oil,,Fries
+recipe,Deep Fried Banga Fish,Potato wedges (frozen),,Wedges
+recipe,Deep Fried Banga Fish,Cooking oil,,Wedges
+recipe,Deep Fried Banga Fish,Takeout box (large),,
+recipe,Tropical Fish Wrap,Tortilla wrap,,
+recipe,Tropical Fish Wrap,Fish fillet (banga mary),,
+recipe,Tropical Fish Wrap,Flour / breading mix,,
+recipe,Tropical Fish Wrap,Cooking oil,,
+recipe,Tropical Fish Wrap,Takeout box (small),,
+recipe,Fish Wrap Box,Tortilla wrap,,
+recipe,Fish Wrap Box,Fish fillet (banga mary),,
+recipe,Fish Wrap Box,Flour / breading mix,,
+recipe,Fish Wrap Box,Cooking oil,,
+recipe,Fish Wrap Box,"Fries (frozen, straight-cut)",,
+recipe,Fish Wrap Box,Macaroni,,
+recipe,Fish Wrap Box,Cheese,,
+recipe,Fish Wrap Box,Takeout box (large),,
+recipe,Fish Only (12pc),Fish fillet (banga mary),,
+recipe,Fish Only (12pc),Flour / breading mix,,
+recipe,Fish Only (12pc),Cooking oil,,
+recipe,Fish Only (12pc),Takeout box (small),,
+recipe,Fish Burger & Fries,Burger bun,,
+recipe,Fish Burger & Fries,Fish fillet (banga mary),,
+recipe,Fish Burger & Fries,Flour / breading mix,,
+recipe,Fish Burger & Fries,Cooking oil,,
+recipe,Fish Burger & Fries,"Fries (frozen, straight-cut)",,
+recipe,Fish Burger & Fries,Takeout box (large),,
+recipe,Corn Ribs,Corn on the cob,,
+recipe,Corn Ribs,Cooking oil,,
+recipe,Corn Ribs,Wing sauce (all 6 in-house sauces),,
+recipe,Corn Ribs,Takeout box (small),,
+recipe,Mac & Cheese Balls,Macaroni,,
+recipe,Mac & Cheese Balls,Cheese,,
+recipe,Mac & Cheese Balls,Flour / breading mix,,
+recipe,Mac & Cheese Balls,Cooking oil,,
+recipe,Mac & Cheese Balls,Takeout box (small),,
+recipe,Refresher,Refresher drink,,
+recipe,Milkshake,Vanilla ice cream,,
+recipe,Milkshake,Milk (full cream),,
+recipe,Milkshake,Milkshake flavouring (syrup / cookies),,
+recipe,Milkshake,Drink cup with lid (16 oz),,
+recipe,Local Juice,Local juice (house-made),,
+recipe,Local Juice,Drink cup with lid (16 oz),,
+# price,item,price (G$)  (menu prices are changed on the website; listed here for Calton)
+price,Thursday Double Bubble,
+price,Friday Mega Meal,
+price,Rasta Pasta (Friday Special),
+price,Unruly Box,
+price,Unruly Box with Wings,
+price,Unruly Hot Box,
+price,Unruly Wrap Box,
+price,Deep Fried Leg Quarters (cut up),
+price,Unruly Bowl,
+price,Burger & Fries,
+price,Burger Combo,
+price,Wings + Fries + Plantain/Wedges,
+price,12pc Wings Only,
+price,Wings + Fries + Mac & Cheese,
+price,Mac & Cheese with Wings,
+price,Waffles & Wings,
+price,Deep Fried Banga Fish,
+price,Tropical Fish Wrap,
+price,Fish Wrap Box,
+price,Fish Only (12pc),
+price,Fish Burger & Fries,
+price,Corn Ribs,
+price,Mac & Cheese Balls,
+price,Refresher,
+price,Milkshake,
+price,Local Juice,

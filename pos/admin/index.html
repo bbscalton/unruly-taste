@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unruly Taste · Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#111111">
+<link rel="icon" href="../../images/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../pos.css">
+<style>
+  main { padding-bottom: 92px; }
+  .who { font-size:.8rem; color:#666; }
+  .tabs button span { font-size:.62rem; }
+  @media (min-width: 760px) { .tabs button span { font-size:.85rem; } main { padding-bottom: 24px; } }
+</style>
+</head>
+<body>
+<div class="top-banner"><b>ADMIN</b> · owner and manager only · staff PINs stay on the till</div>
+<header class="top">
+  <div class="brand"><img class="logo" src="../../images/logo.webp" alt="Unruly Taste" width="62" height="48"><div><b>Admin</b><span id="who" class="who">sign in</span></div></div>
+  <div class="top-acts">
+    <a class="helpbtn" href="../" id="backPos"><em>Back to POS</em></a>
+    <button id="outBtn" class="helpbtn" type="button"><em>Out</em></button>
+  </div>
+</header>
+<nav class="tabs" id="tabs" aria-label="Admin sections"></nav>
+<main id="view"></main>
+<div id="sheet" class="sheet hidden" role="dialog" aria-modal="true"><div class="sheet-panel" id="sheetPanel"></div></div>
+<div id="login" class="login">
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <img class="logo big" src="../../images/logo.webp" alt="Unruly Taste" width="124" height="96">
+    <h1>Admin sign-in</h1>
+    <p>Owner PIN sees everything. A manager PIN opens Customers and Promos only. A staff PIN cannot open Admin.</p>
+    <input id="pin" type="password" placeholder="Owner or manager PIN" autocomplete="current-password" required>
+    <button class="btn primary big" type="submit">Sign in</button>
+    <p class="err" id="loginErr"></p>
+    <p class="small"><a href="../">Back to POS</a></p>
+  </form>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<script src="../../config.js"></script>
+<script src="../../menu.js"></script>
+<script src="../vendor/qrcode.js"></script>
+<script src="../receipt.js"></script>
+<script src="../printer/driver.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

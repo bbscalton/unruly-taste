@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unruly Taste · Order Online</title>
+<meta name="description" content="Unruly Taste, Alberttown, Georgetown: wings specials, Unruly Boxes, Hot Box, Wrap Box, fish specials, Rasta Pasta Fridays. Order on WhatsApp for pickup or delivery.">
+<meta name="theme-color" content="#111111">
+<meta property="og:title" content="Unruly Taste · Order Online">
+<meta property="og:description" content="Wings, Unruly Boxes, Hot Box, Wrap Box, fish specials & more. Tap to order on WhatsApp. Pickup or delivery in Georgetown.">
+<meta property="og:image" content="https://bbscalton.github.io/unruly-taste/images/og-share.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Unruly Taste logo with wings and a Hot Box">
+<meta property="og:url" content="https://bbscalton.github.io/unruly-taste/">
+<meta property="og:type" content="website">
+<link rel="icon" href="images/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="images/favicon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="assistant.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img class="logo" src="images/logo.webp" alt="Unruly Taste" width="62" height="48">
+    <p>Order online · pickup or delivery</p>
+  </div>
+  <div class="hactions">
+    <a class="hbtn" id="callBtn" href="#">📞 Call</a>
+    <a class="hbtn wa" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
+  </div>
+</header>
+
+<main id="shop">
+  <section class="strip card">
+    <div><b>📍 5th Street, Alberttown</b> <span class="muted">(between Light &amp; Albert St), Georgetown</span></div>
+    <div class="muted"><span class="pill soon">Opening Soon</span> Hours coming soon · 🏪 Pickup · 🛵 Delivery</div>
+  </section>
+
+  <nav class="tabs" id="tabs" aria-label="Menu sections"></nav>
+
+  <div id="menu"></div>
+
+  <p class="fineprint">Prices in G$ (GYD). Delivery charges apply. Sides G$1,500 a serving; drinks can be ordered on their own. Rasta Pasta is Fridays only. Prices subject to change.</p>
+</main>
+
+<!-- sticky cart bar -->
+<button id="cartBar" class="cartbar hidden" type="button">
+  <span><b id="cartCount">0</b> item(s) · View order</span><span id="cartTotalBar">G$0</span>
+</button>
+
+<!-- item options sheet -->
+<div class="modal hidden" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="itemTitle">
+  <div class="sheet">
+    <button class="x" data-close aria-label="Close">×</button>
+    <img id="itemImg" alt="" width="640" height="480"><div id="itemNoPhoto" class="hidden"></div>
+    <div class="sheet-body">
+      <h2 id="itemTitle"></h2>
+      <p id="itemDesc" class="muted"></p>
+      <div id="itemDay" class="daynote hidden"></div>
+      <div id="itemGroups"></div>
+      <div class="qtyrow"><span>Quantity</span>
+        <div class="stepper"><button type="button" id="qMinus" aria-label="Less">−</button><b id="qVal">1</b><button type="button" id="qPlus" aria-label="More">+</button></div>
+      </div>
+      <div class="msgline" id="itemErr"></div>
+      <button class="big" id="addBtn" type="button">Add to order</button>
+    </div>
+  </div>
+</div>
+
+<!-- cart + checkout sheet -->
+<div class="modal hidden" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+  <div class="sheet">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div class="sheet-body">
+      <h2 id="cartTitle">Your order</h2>
+      <div id="cartLines"></div>
+      <div class="totalrow"><span>Total</span><b id="cartTotal">G$0</b></div>
+      <p class="note">+ delivery charge if delivered (confirmed on WhatsApp).</p>
+
+      <form id="checkout" novalidate>
+        <h3>Your details</h3>
+        <label for="cName">Your name *</label>
+        <input type="text" id="cName" autocomplete="name" placeholder="e.g. Shania Persaud" maxlength="60">
+        <label for="cPhone">Your WhatsApp number * <span class="muted">(we send your receipt here)</span></label>
+        <input type="tel" id="cPhone" autocomplete="tel" inputmode="tel" value="+592 " placeholder="+592 600 1234" maxlength="22">
+        <div class="hint" id="phoneHint">Guyana numbers: just type the 7 digits after +592. Other countries: start with + and the country code.</div>
+
+        <h3>Pickup or delivery?</h3>
+        <div class="seg" role="radiogroup">
+          <label><input type="radio" name="ful" value="pickup" checked> 🏪 Pickup</label>
+          <label><input type="radio" name="ful" value="delivery"> 🛵 Delivery</label>
+        </div>
+        <div id="pickupInfo" class="note">Pick up at 5th Street, Alberttown (between Light &amp; Albert St), Georgetown.</div>
+        <div id="deliveryBox" class="hidden">
+          <label for="cAddr">Delivery address *</label>
+          <textarea id="cAddr" rows="2" maxlength="200" placeholder="House/lot, street, village/ward"></textarea>
+          <label for="cLandmark">Landmark (optional)</label>
+          <input type="text" id="cLandmark" maxlength="80" placeholder="e.g. opposite the school">
+          <div class="note">Delivery charges apply. Unruly Taste will confirm the delivery fee on WhatsApp.</div>
+        </div>
+        <label for="cNote">Note for the kitchen (optional)</label>
+        <input type="text" id="cNote" maxlength="140" placeholder="e.g. extra sauce, no pepper">
+        <div class="msgline" id="checkoutErr"></div>
+        <button class="big wa" id="placeBtn" type="submit">Send order on WhatsApp</button>
+        <p class="note">Tapping the button opens WhatsApp with your order filled in. Tap <b>Send</b> in WhatsApp to place it. Pay on pickup/delivery.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- confirmation screen -->
+<section id="done" class="hidden">
+  <div class="card done">
+    <div class="tick">✓</div>
+    <h2>Almost done: send it in WhatsApp</h2>
+    <p>Your order <b id="doneNo"></b> is ready in WhatsApp. <b>Tap Send</b> there to place it.</p>
+    <a class="big wa" id="doneWa" href="#" target="_blank" rel="noopener">Open WhatsApp &amp; send order</a>
+    <h3>Your receipt</h3>
+    <pre id="receiptText" class="receipt"></pre>
+    <div class="btnrow">
+      <button type="button" class="sbtn" id="copyReceipt">📋 Copy receipt</button>
+      <button type="button" class="sbtn" id="saveReceipt">💾 Save receipt</button>
+      <button type="button" class="sbtn hidden" id="shareReceipt">📤 Share to my WhatsApp</button>
+      <button type="button" class="sbtn" id="copyReorder">🔁 Copy reorder link</button>
+    </div>
+    <p class="note">Unruly Taste also sends this receipt to your WhatsApp number once they get your order. To order the same again later, open the reorder link in the receipt.</p>
+    <button type="button" class="big ghost" id="newOrder">Start a new order</button>
+  </div>
+</section>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<footer><img class="logo small" src="images/logo.webp" alt="Unruly Taste" width="57" height="44" loading="lazy"><p>5th Street, Alberttown, Georgetown</p></footer>
+
+<script src="config.js"></script>
+<script src="menu.js"></script>
+<script src="app.js"></script>
+<script src="assistant.js"></script>
+</body>
+</html>

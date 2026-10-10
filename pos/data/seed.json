@@ -1,0 +1,2152 @@
+{
+ "_about": "Unruly Taste POS seed. Cost labels: 'example' (made up), 'estimate' (public Guyana market price, source + date in costSource; NOT the restaurant's real cost), 'real' (owner-confirmed; none yet). Recipes/portions are typical fast-food estimates (menu updated 2026-10-08 from the owner flyer; recipes for removed items ws/bw kept for old orders). Vendors are placeholders. No customer data. Live data lives on PC01 (unruly-taste-bot\\data\\pos.json), never in this repo.",
+ "version": 3,
+ "settings": {
+  "currency": "G$",
+  "readyTestMode": true,
+  "ownChat": "5927129487",
+  "lowStockWhatsApp": true,
+  "examplesNote": "Costs are labelled: example (made up), market estimate (public Guyana price, source + date shown) or real (owner-confirmed). None are real yet. Menu updated 8 Oct 2026 from the owner's flyer.",
+  "readyText": "✅ Hi {name}, your Unruly Taste order {no} is ready for pickup at 5th Street, Alberttown (between Light & Albert St). Total {total}, pay on pickup. Thank you!",
+  "readyTextDelivery": "✅ Hi {name}, your Unruly Taste order {no} is ready and will be on its way shortly. Total {total} + delivery, pay on delivery. Thank you!"
+ },
+ "vendors": [
+  {
+   "id": "v-chicken",
+   "name": "Chicken supplier (placeholder)",
+   "phone": "+592 000 0001 (placeholder)",
+   "placeholder": true
+  },
+  {
+   "id": "v-produce",
+   "name": "Produce vendor (placeholder)",
+   "phone": "+592 000 0002 (placeholder)",
+   "placeholder": true
+  },
+  {
+   "id": "v-grocery",
+   "name": "Grocery wholesaler (placeholder)",
+   "phone": "+592 000 0003 (placeholder)",
+   "placeholder": true
+  },
+  {
+   "id": "v-bakery",
+   "name": "Bakery (placeholder)",
+   "phone": "+592 000 0004 (placeholder)",
+   "placeholder": true
+  },
+  {
+   "id": "v-packaging",
+   "name": "Packaging supplier (placeholder)",
+   "phone": "+592 000 0005 (placeholder)",
+   "placeholder": true
+  },
+  {
+   "id": "v-fish",
+   "name": "Fish supplier (placeholder)",
+   "phone": "+592 000 0006 (placeholder)",
+   "placeholder": true
+  },
+  {
+   "id": "v-dairy",
+   "name": "Dairy / ice cream supplier (placeholder)",
+   "phone": "+592 000 0007 (placeholder)",
+   "placeholder": true
+  }
+ ],
+ "ingredients": [
+  {
+   "id": "wings",
+   "name": "Chicken wings",
+   "unit": "kg",
+   "costPerUnit": 1367,
+   "costExample": false,
+   "vendorId": "v-chicken",
+   "stock": 20,
+   "min": {
+    "kind": "servings",
+    "value": 8
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Prime Farms Guyana (poultry producer, online shop)",
+    "url": "https://primefarmsguyana.com/products/chicken-wings",
+    "price": "G$620",
+    "pack": "per lb",
+    "calc": "620 / 0.4536 kg = G$1,367/kg",
+    "date": "2026-10-08",
+    "note": "Producer retail price, delivered; wholesale may differ."
+   }
+  },
+  {
+   "id": "strips",
+   "name": "Chicken strips (boneless)",
+   "unit": "kg",
+   "costPerUnit": 1543,
+   "costExample": false,
+   "vendorId": "v-chicken",
+   "stock": 8,
+   "min": {
+    "kind": "servings",
+    "value": 10
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Prime Farms Guyana (poultry producer, online shop)",
+    "url": "https://primefarmsguyana.com/products/boneless-chicken-breast",
+    "price": "G$700",
+    "pack": "per lb (boneless breast)",
+    "calc": "700 / 0.4536 kg = G$1,543/kg",
+    "date": "2026-10-08",
+    "note": "Strips cut from boneless breast. Guystar lists ready 'Chicken Breast Strips' at G$2,895/kg."
+   }
+  },
+  {
+   "id": "patty",
+   "name": "Chicken burger patty",
+   "unit": "each",
+   "costPerUnit": 175,
+   "costExample": false,
+   "vendorId": "v-chicken",
+   "stock": 40,
+   "min": {
+    "kind": "qty",
+    "value": 10
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Prime Farms Guyana (poultry producer, online shop)",
+    "url": "https://primefarmsguyana.com/products/chicken-mince",
+    "price": "G$700",
+    "pack": "per lb (chicken mince)",
+    "calc": "4 oz (113 g) patty = 0.25 lb x 700 = G$175 (meat only)",
+    "date": "2026-10-08",
+    "note": "Derived: assumes a 4 oz home-made patty from mince; no ready chicken-patty price found."
+   }
+  },
+  {
+   "id": "breading",
+   "name": "Flour / breading mix",
+   "unit": "kg",
+   "costPerUnit": 315,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 10,
+   "min": {
+    "kind": "qty",
+    "value": 2
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=flour",
+    "price": "G$315",
+    "pack": "Thunderbolt flour 1 kg",
+    "calc": "G$315/kg",
+    "date": "2026-10-08",
+    "note": "Plain flour only; seasoning/breading mix not priced."
+   }
+  },
+  {
+   "id": "oil",
+   "name": "Cooking oil",
+   "unit": "L",
+   "costPerUnit": 1183,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 20,
+   "min": {
+    "kind": "qty",
+    "value": 5
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=vegetable+oil",
+    "price": "G$5,595",
+    "pack": "Wesson vegetable oil 1.25 gal (4.73 L)",
+    "calc": "5,595 / 4.73 = G$1,183/L",
+    "date": "2026-10-08",
+    "note": "Imported brand; local soya oil was reported ~G$700/L by a shopper (Stabroek News, 19 Jan 2026)."
+   }
+  },
+  {
+   "id": "potato",
+   "name": "Fries (frozen, straight-cut)",
+   "unit": "kg",
+   "costPerUnit": 758,
+   "costExample": false,
+   "vendorId": "v-produce",
+   "stock": 25,
+   "min": {
+    "kind": "servings",
+    "value": 15
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=fries",
+    "price": "G$1,895",
+    "pack": "Lamb Weston straight-cut fries 2.5 kg",
+    "calc": "1,895 / 2.5 = G$758/kg",
+    "date": "2026-10-08",
+    "note": "Assumes frozen fries. Fresh potatoes ~G$310/kg (expatistan.com, Georgetown, Jun 2026) but need peeling/cutting."
+   }
+  },
+  {
+   "id": "macaroni",
+   "name": "Macaroni",
+   "unit": "kg",
+   "costPerUnit": 888,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 8,
+   "min": {
+    "kind": "qty",
+    "value": 2
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=macaroni",
+    "price": "G$355",
+    "pack": "Champion macaroni 400 g",
+    "calc": "355 / 0.4 = G$888/kg",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "cheese",
+   "name": "Cheese",
+   "unit": "kg",
+   "costPerUnit": 3199,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 5,
+   "min": {
+    "kind": "qty",
+    "value": 1
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=cheese",
+    "price": "G$15,995",
+    "pack": "Anchor cheddar 5 kg block",
+    "calc": "15,995 / 5 = G$3,199/kg",
+    "date": "2026-10-08",
+    "note": "Cut-and-packed Anchor cheddar is G$3,495/kg on the same site."
+   }
+  },
+  {
+   "id": "waffle",
+   "name": "Waffle mix",
+   "unit": "kg",
+   "costPerUnit": 1532,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 4,
+   "min": {
+    "kind": "qty",
+    "value": 1
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=waffle",
+    "price": "G$695",
+    "pack": "Country Barn pancake & waffle mix 16 oz (454 g)",
+    "calc": "695 / 0.4536 = G$1,532/kg",
+    "date": "2026-10-08",
+    "note": "Mix only; egg/milk not included."
+   }
+  },
+  {
+   "id": "plantain",
+   "name": "Plantain",
+   "unit": "each",
+   "costPerUnit": 149,
+   "costExample": false,
+   "vendorId": "v-produce",
+   "stock": 30,
+   "min": {
+    "kind": "qty",
+    "value": 8
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=plantain",
+    "price": "G$495",
+    "pack": "ripe plantain per kg",
+    "calc": "assumes ~0.3 kg per plantain: 495 x 0.3 = G$149 each",
+    "date": "2026-10-08",
+    "note": "Green plantain is G$995/kg on the same site. Weight per plantain is an assumption."
+   }
+  },
+  {
+   "id": "bun",
+   "name": "Burger bun",
+   "unit": "each",
+   "costPerUnit": 77,
+   "costExample": false,
+   "vendorId": "v-bakery",
+   "stock": 40,
+   "min": {
+    "kind": "qty",
+    "value": 10
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=1&keyword=hamburger+rolls",
+    "price": "G$385",
+    "pack": "Bakewell hamburger rolls, bag of 5",
+    "calc": "385 / 5 = G$77 each",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "tortilla",
+   "name": "Tortilla wrap",
+   "unit": "each",
+   "costPerUnit": 90,
+   "costExample": false,
+   "vendorId": "v-bakery",
+   "stock": 40,
+   "min": {
+    "kind": "qty",
+    "value": 10
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=flour",
+    "price": "G$895",
+    "pack": "Ortega flour tortillas 8\", 10 count",
+    "calc": "895 / 10 = G$90 each",
+    "date": "2026-10-08",
+    "note": "8-inch; a wrap may need a bigger (10-12\") tortilla, which costs more."
+   }
+  },
+  {
+   "id": "sauce",
+   "name": "Wing sauce (all 6 in-house sauces)",
+   "unit": "L",
+   "costPerUnit": 1478,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 6,
+   "min": {
+    "kind": "qty",
+    "value": 1
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=bbq+sauce",
+    "price": "G$5,595",
+    "pack": "Bull's Eye original BBQ sauce 1 gal (3.785 L)",
+    "calc": "5,595 / 3.785 = G$1,478/L",
+    "date": "2026-10-08",
+    "note": "Proxy: one BBQ sauce price for all 6 in-house sauces (BBQ, Honey Glaze, Lemon Pepper, Garlic Parmesan, Thai Chili, Coconut Pineapple); real recipes differ."
+   }
+  },
+  {
+   "id": "dip",
+   "name": "Dipping sauce",
+   "unit": "L",
+   "costPerUnit": 1686,
+   "costExample": false,
+   "vendorId": "v-grocery",
+   "stock": 3,
+   "min": {
+    "kind": "qty",
+    "value": 0.5
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=mayonnaise",
+    "price": "G$1,495",
+    "pack": "Kraft mayonnaise 887 ml",
+    "calc": "1,495 / 0.887 = G$1,686/L",
+    "date": "2026-10-08",
+    "note": "Proxy: the real dipping sauces are unknown."
+   }
+  },
+  {
+   "id": "refresher",
+   "name": "Refresher drink",
+   "unit": "each",
+   "costPerUnit": 250,
+   "costExample": true,
+   "vendorId": "v-grocery",
+   "stock": 48,
+   "min": {
+    "kind": "qty",
+    "value": 12
+   },
+   "costLabel": "example",
+   "costSource": {
+    "note": "No reliable source: the refresher is a house drink (7 flavours, sells for G$1,000) with an unknown recipe; G$250 per drink is an example (bottled 1 L juices on Guystar are G$365-495).",
+    "date": "2026-10-08"
+   }
+  },
+  {
+   "id": "boxS",
+   "name": "Takeout box (small)",
+   "unit": "each",
+   "costPerUnit": 100,
+   "costExample": true,
+   "vendorId": "v-packaging",
+   "stock": 150,
+   "min": {
+    "kind": "qty",
+    "value": 30
+   },
+   "costLabel": "example",
+   "costSource": {
+    "note": "No reliable source for a small wings-only box; left as example.",
+    "date": "2026-10-08"
+   }
+  },
+  {
+   "id": "boxL",
+   "name": "Takeout box (large)",
+   "unit": "each",
+   "costPerUnit": 40,
+   "costExample": false,
+   "vendorId": "v-packaging",
+   "stock": 100,
+   "min": {
+    "kind": "qty",
+    "value": 25
+   },
+   "costLabel": "estimate",
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=food+box",
+    "price": "G$1,995",
+    "pack": "Jubilee 3-compartment 7x7\" food box, 50 pcs",
+    "calc": "1,995 / 50 = G$40 each",
+    "date": "2026-10-08",
+    "note": "Box type Unruly Taste uses is unknown."
+   }
+  },
+  {
+   "id": "legq",
+   "name": "Chicken leg quarters",
+   "unit": "kg",
+   "costPerUnit": 1395,
+   "vendorId": "v-chicken",
+   "stock": 12,
+   "min": {
+    "kind": "qty",
+    "value": 3
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=leg+quarter",
+    "price": "G$1,395",
+    "pack": "Chicken leg quarters, per kg (skin on, bone in, frozen)",
+    "calc": "G$1,395/kg",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "fish",
+   "name": "Fish fillet (banga mary)",
+   "unit": "kg",
+   "costPerUnit": 2310,
+   "vendorId": "v-fish",
+   "stock": 8,
+   "min": {
+    "kind": "qty",
+    "value": 2
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=banga",
+    "price": "G$2,095",
+    "pack": "Fish Banga FLTD (filleted), 2 lb pack",
+    "calc": "2,095 / 0.907 kg = G$2,310/kg",
+    "date": "2026-10-08",
+    "note": "Used for all fish items (banga fish, wrap, burger, 12pc). The fish Unruly Taste uses for wraps/burgers is unknown."
+   }
+  },
+  {
+   "id": "wedges",
+   "name": "Potato wedges (frozen)",
+   "unit": "kg",
+   "costPerUnit": 798,
+   "vendorId": "v-grocery",
+   "stock": 10,
+   "min": {
+    "kind": "qty",
+    "value": 2
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=wedges",
+    "price": "G$1,995",
+    "pack": "Lamb Weston seasoned wedges 2.5 kg",
+    "calc": "1,995 / 2.5 = G$798/kg",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "pasta",
+   "name": "Penne pasta",
+   "unit": "kg",
+   "costPerUnit": 828,
+   "vendorId": "v-grocery",
+   "stock": 5,
+   "min": {
+    "kind": "qty",
+    "value": 1
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=penne",
+    "price": "G$745",
+    "pack": "Primo penne rigate 900 g",
+    "calc": "745 / 0.9 = G$828/kg",
+    "date": "2026-10-08",
+    "note": "Rasta pasta shape/brand unknown."
+   }
+  },
+  {
+   "id": "cream",
+   "name": "Cooking cream",
+   "unit": "L",
+   "costPerUnit": 3895,
+   "vendorId": "v-dairy",
+   "stock": 3,
+   "min": {
+    "kind": "qty",
+    "value": 0.5
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=cream",
+    "price": "G$3,895",
+    "pack": "Emborg cooking cream 1 L",
+    "calc": "G$3,895/L",
+    "date": "2026-10-08",
+    "note": "Creamy sauce base for Rasta Pasta (real recipe unknown; may use evaporated or coconut milk, which cost less)."
+   }
+  },
+  {
+   "id": "peppers",
+   "name": "Sweet peppers",
+   "unit": "kg",
+   "costPerUnit": 3595,
+   "vendorId": "v-produce",
+   "stock": 2,
+   "min": {
+    "kind": "qty",
+    "value": 0.5
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=pepper",
+    "price": "G$3,595",
+    "pack": "Sweet pepper, local red & green small, per kg",
+    "calc": "G$3,595/kg",
+    "date": "2026-10-08",
+    "note": "For corn & peppers rice and Rasta Pasta."
+   }
+  },
+  {
+   "id": "rice",
+   "name": "Rice (white, long grain)",
+   "unit": "kg",
+   "costPerUnit": 300,
+   "vendorId": "v-grocery",
+   "stock": 10,
+   "min": {
+    "kind": "qty",
+    "value": 2
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=rice",
+    "price": "G$2,995",
+    "pack": "Karibee white long grain rice 10 kg",
+    "calc": "2,995 / 10 = G$300/kg",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "corn",
+   "name": "Sweet corn kernels (canned)",
+   "unit": "kg",
+   "costPerUnit": 671,
+   "vendorId": "v-grocery",
+   "stock": 4,
+   "min": {
+    "kind": "qty",
+    "value": 1
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=corn",
+    "price": "G$285",
+    "pack": "Golden Sweet whole kernel corn 425 g can",
+    "calc": "285 / 0.425 = G$671/kg",
+    "date": "2026-10-08",
+    "note": "Can weight includes liquid. Frozen kernels (Emborg 450 g) are G$945."
+   }
+  },
+  {
+   "id": "corncob",
+   "name": "Corn on the cob",
+   "unit": "each",
+   "costPerUnit": 295,
+   "vendorId": "v-produce",
+   "stock": 30,
+   "min": {
+    "kind": "qty",
+    "value": 8
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=corn",
+    "price": "G$295",
+    "pack": "Sweet corn cob, local, per ear",
+    "calc": "G$295 each",
+    "date": "2026-10-08",
+    "note": "For Corn Ribs (portion per serving is an assumption)."
+   }
+  },
+  {
+   "id": "beefpatty",
+   "name": "Beef burger patty",
+   "unit": "each",
+   "costPerUnit": 599,
+   "vendorId": "v-grocery",
+   "stock": 18,
+   "min": {
+    "kind": "qty",
+    "value": 6
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=burger",
+    "price": "G$3,595",
+    "pack": "C&F beef burger patties, 6 x 5 oz (locally made)",
+    "calc": "3,595 / 6 = G$599 each",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "icecream",
+   "name": "Vanilla ice cream",
+   "unit": "L",
+   "costPerUnit": 719,
+   "vendorId": "v-dairy",
+   "stock": 10,
+   "min": {
+    "kind": "qty",
+    "value": 2
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=1&keyword=ice+cream+vanilla",
+    "price": "G$3,595",
+    "pack": "Fernandes vanilla ice cream 5 L",
+    "calc": "3,595 / 5 = G$719/L",
+    "date": "2026-10-08",
+    "note": "Milkshake base (real recipe unknown)."
+   }
+  },
+  {
+   "id": "milk",
+   "name": "Milk (full cream)",
+   "unit": "L",
+   "costPerUnit": 665,
+   "vendorId": "v-dairy",
+   "stock": 6,
+   "min": {
+    "kind": "qty",
+    "value": 1
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=milk",
+    "price": "G$665",
+    "pack": "Moo full cream milk 1 L",
+    "calc": "G$665/L",
+    "date": "2026-10-08",
+    "note": ""
+   }
+  },
+  {
+   "id": "cup",
+   "name": "Drink cup with lid (16 oz)",
+   "unit": "each",
+   "costPerUnit": 41,
+   "vendorId": "v-packaging",
+   "stock": 150,
+   "min": {
+    "kind": "qty",
+    "value": 30
+   },
+   "costLabel": "estimate",
+   "costExample": false,
+   "costSource": {
+    "name": "Guystar (Guyana online grocery)",
+    "url": "http://www.guystar.gy/index.php?main_page=advanced_search_result&search_in_description=0&keyword=cup",
+    "price": "G$2,046",
+    "pack": "Disposable cups with lid 16 oz, 50 cups",
+    "calc": "2,046 / 50 = G$41 each",
+    "date": "2026-10-08",
+    "note": "Cup type Unruly Taste uses is unknown."
+   }
+  },
+  {
+   "id": "shakeflav",
+   "name": "Milkshake flavouring (syrup / cookies)",
+   "unit": "each",
+   "costPerUnit": 100,
+   "vendorId": "v-grocery",
+   "stock": 40,
+   "min": {
+    "kind": "qty",
+    "value": 10
+   },
+   "costLabel": "example",
+   "costExample": true,
+   "costSource": {
+    "note": "No reliable source: per-shake flavouring (chocolate/caramel/strawberry syrup, cookies) is unknown; G$100 per shake is an example.",
+    "date": "2026-10-08"
+   }
+  },
+  {
+   "id": "juice",
+   "name": "Local juice (house-made)",
+   "unit": "each",
+   "costPerUnit": 150,
+   "vendorId": "v-produce",
+   "stock": 40,
+   "min": {
+    "kind": "qty",
+    "value": 10
+   },
+   "costLabel": "example",
+   "costExample": true,
+   "costSource": {
+    "note": "No reliable source: house-made local juice recipe unknown; G$150 per cup is an example.",
+    "date": "2026-10-08"
+   }
+  }
+ ],
+ "recipes": {
+  "wt": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.55
+    },
+    {
+     "ing": "breading",
+     "qty": 0.05
+    },
+    {
+     "ing": "oil",
+     "qty": 0.08
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.05
+    },
+    {
+     "ing": "boxS",
+     "qty": 1
+    }
+   ]
+  },
+  "ws": {
+   "example": false,
+   "label": "estimate",
+   "note": "Typical fast-food portions, NOT Unruly Taste's real recipes: 12pc wings ~0.55 kg raw (12 pieces x ~45 g); combos/boxes assume 6 pieces (~0.3 kg) because they cost the same as 12pc; fries 150 g frozen; mac & cheese 70 g dry pasta + 40 g cheese; 4 oz chicken patty; strips 200 g in a box, 100 g in a wrap; flour dredge ~10% of chicken weight; oil = frying loss/top-up per portion.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15,
+     "match": "Fries"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03,
+     "match": "Fries"
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07,
+     "match": "Mac & Cheese"
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04,
+     "match": "Mac & Cheese"
+    },
+    {
+     "ing": "waffle",
+     "qty": 0.08,
+     "match": "Waffles"
+    },
+    {
+     "ing": "plantain",
+     "qty": 1,
+     "match": "Plantain"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "wc": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "bw": {
+   "example": false,
+   "label": "estimate",
+   "note": "Typical fast-food portions, NOT Unruly Taste's real recipes: 12pc wings ~0.55 kg raw (12 pieces x ~45 g); combos/boxes assume 6 pieces (~0.3 kg) because they cost the same as 12pc; fries 150 g frozen; mac & cheese 70 g dry pasta + 40 g cheese; 4 oz chicken patty; strips 200 g in a box, 100 g in a wrap; flour dredge ~10% of chicken weight; oil = frying loss/top-up per portion.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "bun",
+     "qty": 1
+    },
+    {
+     "ing": "patty",
+     "qty": 1
+    },
+    {
+     "ing": "breading",
+     "qty": 0.02
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "dip",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "hb": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "bun",
+     "qty": 1
+    },
+    {
+     "ing": "patty",
+     "qty": 1
+    },
+    {
+     "ing": "breading",
+     "qty": 0.02
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "wb": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "tortilla",
+     "qty": 1
+    },
+    {
+     "ing": "strips",
+     "qty": 0.1
+    },
+    {
+     "ing": "breading",
+     "qty": 0.015
+    },
+    {
+     "ing": "oil",
+     "qty": 0.015
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "db": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "bun",
+     "qty": 1,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "patty",
+     "qty": 1,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.02,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "tortilla",
+     "qty": 1,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.1,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.015,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.015,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "potato",
+     "qty": 0.3
+    },
+    {
+     "ing": "oil",
+     "qty": 0.06
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.14
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.08
+    },
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "boxL",
+     "qty": 2
+    }
+   ]
+  },
+  "mm": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "bun",
+     "qty": 1,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "patty",
+     "qty": 1,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.02,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Hot Box"
+    },
+    {
+     "ing": "tortilla",
+     "qty": 1,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.1,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.015,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.015,
+     "match": "Wrap Box"
+    },
+    {
+     "ing": "potato",
+     "qty": 0.3
+    },
+    {
+     "ing": "oil",
+     "qty": 0.06
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.14
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.08
+    },
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "refresher",
+     "qty": 2
+    },
+    {
+     "ing": "cup",
+     "qty": 2
+    },
+    {
+     "ing": "boxL",
+     "qty": 2
+    }
+   ]
+  },
+  "rp": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "pasta",
+     "qty": 0.12
+    },
+    {
+     "ing": "cream",
+     "qty": 0.08
+    },
+    {
+     "ing": "peppers",
+     "qty": 0.04
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.02
+    },
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "ub": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "strips",
+     "qty": 0.2
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "uw": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "lq": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "legq",
+     "qty": 0.4
+    },
+    {
+     "ing": "breading",
+     "qty": 0.04
+    },
+    {
+     "ing": "oil",
+     "qty": 0.08
+    },
+    {
+     "ing": "plantain",
+     "qty": 1,
+     "match": "Plantain"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Plantain"
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15,
+     "match": "Fries"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03,
+     "match": "Fries"
+    },
+    {
+     "ing": "wedges",
+     "qty": 0.15,
+     "match": "Wedges"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03,
+     "match": "Wedges"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "bo": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "rice",
+     "qty": 0.1
+    },
+    {
+     "ing": "corn",
+     "qty": 0.04
+    },
+    {
+     "ing": "peppers",
+     "qty": 0.02
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "bu": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "bun",
+     "qty": 1
+    },
+    {
+     "ing": "patty",
+     "qty": 1,
+     "match": "Chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.02,
+     "match": "Chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Chicken"
+    },
+    {
+     "ing": "beefpatty",
+     "qty": 1,
+     "match": "Beef"
+    },
+    {
+     "ing": "fish",
+     "qty": 0.12,
+     "match": "Fish"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.014,
+     "match": "Fish"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03,
+     "match": "Fish"
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "bc": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "bun",
+     "qty": 1
+    },
+    {
+     "ing": "patty",
+     "qty": 1
+    },
+    {
+     "ing": "breading",
+     "qty": 0.02
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "wings",
+     "qty": 0.3,
+     "match": "Wings"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Wings"
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03,
+     "match": "Wings"
+    },
+    {
+     "ing": "strips",
+     "qty": 0.2,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05,
+     "match": "Strip chicken"
+    },
+    {
+     "ing": "icecream",
+     "qty": 0.25,
+     "match": "Milkshake"
+    },
+    {
+     "ing": "milk",
+     "qty": 0.15,
+     "match": "Milkshake"
+    },
+    {
+     "ing": "shakeflav",
+     "qty": 1,
+     "match": "Milkshake"
+    },
+    {
+     "ing": "refresher",
+     "qty": 1,
+     "match": "Refresher"
+    },
+    {
+     "ing": "cup",
+     "qty": 1
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "wf": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "plantain",
+     "qty": 1,
+     "match": "Plantain"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Plantain"
+    },
+    {
+     "ing": "wedges",
+     "qty": 0.1,
+     "match": "Wedges"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Wedges"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "wm": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "wa": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "wings",
+     "qty": 0.3
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.05
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.03
+    },
+    {
+     "ing": "waffle",
+     "qty": 0.08
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "fb": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "fish",
+     "qty": 0.25
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.062
+    },
+    {
+     "ing": "plantain",
+     "qty": 1,
+     "match": "Plantain"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.02,
+     "match": "Plantain"
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15,
+     "match": "Fries"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03,
+     "match": "Fries"
+    },
+    {
+     "ing": "wedges",
+     "qty": 0.15,
+     "match": "Wedges"
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03,
+     "match": "Wedges"
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "fw": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "tortilla",
+     "qty": 1
+    },
+    {
+     "ing": "fish",
+     "qty": 0.1
+    },
+    {
+     "ing": "breading",
+     "qty": 0.012
+    },
+    {
+     "ing": "oil",
+     "qty": 0.025
+    },
+    {
+     "ing": "boxS",
+     "qty": 1
+    }
+   ]
+  },
+  "fx": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "tortilla",
+     "qty": 1
+    },
+    {
+     "ing": "fish",
+     "qty": 0.1
+    },
+    {
+     "ing": "breading",
+     "qty": 0.012
+    },
+    {
+     "ing": "oil",
+     "qty": 0.025
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "macaroni",
+     "qty": 0.07
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "fo": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "fish",
+     "qty": 0.4
+    },
+    {
+     "ing": "breading",
+     "qty": 0.048
+    },
+    {
+     "ing": "oil",
+     "qty": 0.1
+    },
+    {
+     "ing": "boxS",
+     "qty": 1
+    }
+   ]
+  },
+  "fg": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "bun",
+     "qty": 1
+    },
+    {
+     "ing": "fish",
+     "qty": 0.12
+    },
+    {
+     "ing": "breading",
+     "qty": 0.014
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "potato",
+     "qty": 0.15
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "boxL",
+     "qty": 1
+    }
+   ]
+  },
+  "cr": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "corncob",
+     "qty": 1
+    },
+    {
+     "ing": "oil",
+     "qty": 0.03
+    },
+    {
+     "ing": "sauce",
+     "qty": 0.02
+    },
+    {
+     "ing": "boxS",
+     "qty": 1
+    }
+   ]
+  },
+  "mb": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "macaroni",
+     "qty": 0.08
+    },
+    {
+     "ing": "cheese",
+     "qty": 0.05
+    },
+    {
+     "ing": "breading",
+     "qty": 0.03
+    },
+    {
+     "ing": "oil",
+     "qty": 0.04
+    },
+    {
+     "ing": "boxS",
+     "qty": 1
+    }
+   ]
+  },
+  "rf": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "refresher",
+     "qty": 1
+    }
+   ]
+  },
+  "mk": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "icecream",
+     "qty": 0.25
+    },
+    {
+     "ing": "milk",
+     "qty": 0.15
+    },
+    {
+     "ing": "shakeflav",
+     "qty": 1
+    },
+    {
+     "ing": "cup",
+     "qty": 1
+    }
+   ]
+  },
+  "lj": {
+   "example": false,
+   "label": "estimate",
+   "note": "Estimated portions (typical fast food), not Unruly Taste's real recipe. See the recipe note in Settings.",
+   "rules": [
+    {
+     "ing": "juice",
+     "qty": 1
+    },
+    {
+     "ing": "cup",
+     "qty": 1
+    }
+   ]
+  }
+ },
+ "recipeNote": "Typical fast-food portions, NOT Unruly Taste's real recipes: 12pc wings ~0.55 kg raw; meals/boxes with wings assume ~6 pieces (~0.3 kg); strip chicken 200 g; leg quarter ~400 g; fish 250 g (banga), 100-120 g (wrap/burger), 400 g (12pc); fries/wedges 150 g frozen; mac & cheese 70 g pasta + 40 g cheese; rasta pasta 120 g pasta + 80 ml cream; bowl rice 100 g dry; milkshake 250 ml ice cream + 150 ml milk; corn ribs 1 cob; flour dredge ~10% of protein weight; oil = frying loss per portion."
+}

@@ -228,6 +228,12 @@
   function mount() {
     if (document.querySelector('.st-btn')) return;
     var b = el('button', 'st-btn', '? Steps'); b.type = 'button'; b.setAttribute('aria-label', 'Show me the steps for this screen'); b.onclick = start; document.body.append(b);
+    var bar = $('.top-acts');   // also put a Steps button in the header, next to Help
+    if (bar && !bar.querySelector('.st-head')) {
+      var h = el('button', 'helpbtn st-head', ''); h.type = 'button'; h.title = 'Steps: show me how'; h.setAttribute('aria-label', 'Show me the steps for this screen');
+      var q = el('span', null, '?'); var e = el('em', null, 'Steps'); h.append(q, e); h.onclick = start;
+      var help = bar.querySelector('[data-help]'); bar.insertBefore(h, help || bar.firstChild);
+    }
   }
   window.UTSteps = { start: start, stop: stop, context: context, active: function () { return !!tip; } };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);

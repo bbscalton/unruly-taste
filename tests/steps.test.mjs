@@ -31,6 +31,8 @@ test('POS: login screen has a Steps button and guide', { skip: !JSDOM }, async (
 });
 test('POS: every cashier tab', { skip: !JSDOM }, async () => {
   const w = await load('pos', true); assert.ok(w.document.querySelector('.st-btn'));
+  assert.ok(w.document.querySelector('.top-acts .st-head'), 'Steps button in header'); assert.equal(w.document.querySelector('.top-acts .st-head').nextElementSibling.hasAttribute('data-help'), true, 'sits next to Help');
+  w.document.querySelector('.st-head').click(); await wait(30); assert.ok(w.document.querySelector('.st-tip'), 'header button opens guide'); w.UTSteps.stop();
   need(await walk(w), ['Filter the orders', 'An order', 'Move the order along', 'Receipt', 'Print queue', 'Sign out', 'Switch sections'], 'orders');
   await tab(w, 'walkin'); need(await walk(w), ['Tap what the customer wants', 'The ticket', 'Customer name (optional)', 'Cash received', 'Quick amounts', 'Complete the sale'], 'walkin');
   await tab(w, 'stock'); need(await walk(w), ['An ingredient', 'Restock', 'Count', 'Who to call'], 'stock');

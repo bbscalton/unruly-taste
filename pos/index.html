@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>/* one-time cache clear per build: unregisters service workers, empties Cache Storage, reloads once */
+(function(){var B='20261010-2',K='ut_build';try{if(localStorage.getItem(K)===B)return;localStorage.setItem(K,B);}catch(e){return;}
+var jobs=[];try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));}));}catch(e){}
+try{if(window.caches&&caches.keys)jobs.push(caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x);}));}));}catch(e){}
+var go=function(){var u=new URL(location.href);u.searchParams.set('b',B);location.replace(u.toString());};
+Promise.all(jobs).then(go,go);})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Unruly Taste · POS</title>
@@ -8,8 +14,8 @@
 <meta name="theme-color" content="#111111">
 <link rel="icon" href="../images/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
-<link rel="stylesheet" href="pos.css">
-<link rel="stylesheet" href="steps.css?v=1">
+<link rel="stylesheet" href="pos.css?v=2">
+<link rel="stylesheet" href="steps.css?v=2">
 </head>
 <body>
 <div class="top-banner"><b>POS</b> · cash only · costs are <b>market estimates / examples</b>, portions estimated, vendors placeholders, until the owner confirms real numbers</div>
@@ -43,14 +49,14 @@
 </div>
 <div id="toast" class="toast hidden" role="status"></div>
 <div id="printArea" aria-hidden="true"></div>
-<script src="../config.js"></script>
-<script src="gate.js"></script>
-<script src="../menu.js"></script>
-<script src="vendor/qrcode.js"></script>
-<script src="receipt.js"></script>
-<script src="printer/driver.js"></script>
-<script src="pos.js"></script>
-<script src="faq.js"></script>
-<script src="steps.js?v=1"></script>
+<script src="../config.js?v=2"></script>
+<script src="gate.js?v=2"></script>
+<script src="../menu.js?v=2"></script>
+<script src="vendor/qrcode.js?v=2"></script>
+<script src="receipt.js?v=2"></script>
+<script src="printer/driver.js?v=2"></script>
+<script src="pos.js?v=2"></script>
+<script src="faq.js?v=2"></script>
+<script src="steps.js?v=2"></script>
 </body>
 </html>

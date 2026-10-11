@@ -1,0 +1,17 @@
+/* "? Steps" guide for the POS and Admin pages. Client-side only. */
+.st-btn{position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:90;background:#f5c518;color:#111;border:2px solid #111;border-radius:999px;padding:12px 20px;min-height:48px;font:800 1rem system-ui,sans-serif;box-shadow:0 6px 18px #0006;cursor:pointer}
+.st-btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (min-width:760px){.st-btn{bottom:18px}}
+body:has(.faq) .st-btn{display:none}
+.st-hole{position:fixed;z-index:100;pointer-events:none;border-radius:12px;box-shadow:0 0 0 100vmax rgba(10,10,10,.68);outline:4px solid #f5c518;transition:top .2s,left .2s,width .2s,height .2s,opacity .2s}
+.st-hole.st-hide{opacity:0}
+.st-tip{position:fixed;z-index:101;width:min(92vw,360px);background:#fff;color:#111;border-radius:16px;padding:16px;box-shadow:0 12px 40px #000a;font:16px/1.4 system-ui,sans-serif}
+.st-count{font-size:.78rem;font-weight:800;color:#a30d0d;text-transform:uppercase;letter-spacing:.05em}
+.st-title{font-size:1.25rem;font-weight:900;margin:2px 0 4px}
+.st-text{margin:0 0 12px;color:#333}
+.st-actions{display:flex;gap:8px;flex-wrap:wrap}
+.st-actions button{flex:1;min-height:46px;border:0;border-radius:12px;padding:10px 14px;font:700 1rem system-ui,sans-serif;cursor:pointer;background:#111;color:#fff}
+.st-actions button:disabled{background:#ccc;color:#777;cursor:not-allowed}
+.st-actions .st-next{background:#f5c518;color:#111}
+.st-actions .st-x{flex:0 0 auto;background:#e5e5e5;color:#111}
+@media print{.st-btn,.st-hole,.st-tip{display:none!important}}

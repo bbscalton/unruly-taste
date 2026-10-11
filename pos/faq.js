@@ -52,7 +52,7 @@
       ['How do I import the owner\'s ingredient sheet?', '<ol><li>The owner fills in the ingredient sheet (printed or WhatsApp version).</li><li>The answers go into the CSV template (<b>Admin › Shop settings › CSV import</b>).</li><li>Paste the CSV or choose the file, then tap <b>Preview import</b> and check the list.</li><li>Tap <b>Apply import &amp; save</b>.</li></ol><p>Imported costs become ' + T('real', 'real (owner)') + '. Blank cells keep the current value. Recipe rows replace that item\'s recipe (blank amounts keep the current amount). Stock numbers set the count. Menu prices are changed on Admin › Menu &amp; Prices (owner). The public website menu file is not rewritten by that save.</p>'],
     ]],
     ['Today', [
-      ['What does the Today tab show?', '<p>Today\'s sales, number of orders, estimated cost and profit, average order, a split by source (walk-in / WhatsApp / web) and items sold. "Today" means since midnight, Guyana time. Older lines still waiting for a price aren\'t counted until the price is set. Test orders are included.</p>'],
+      ['What does the Today tab show?', '<p>Today\'s sales, number of orders, <span data-cost>estimated cost and profit, </span>average order, a split by source (walk-in / WhatsApp / web) and items sold. "Today" means since midnight, Guyana time. Older lines still waiting for a price aren\'t counted until the price is set. Test orders are included.</p>'],
     ]],
     ['Payments', [
       ['Can customers pay by card or mobile money?', '<p><b>Cash only for now.</b> There are no card payments. Mobile money is planned for later. The POS never takes payments online: WhatsApp and web customers pay on pickup or delivery.</p>'],
@@ -74,7 +74,7 @@
   ];
 
   let n = 0;
-  const body = FAQ.map(([sec, qs]) => '<section class="faq-sec" data-sec><h3>' + sec + '</h3>' + qs.map(([q, a]) => '<details class="faq-q" id="faq-' + (++n) + '"><summary>' + q + '</summary><div class="faq-a">' + a + '</div></details>').join('') + '</section>').join('');
+  const body = FAQ.map(([sec, qs]) => '<section class="faq-sec" data-sec' + (sec === 'Cost and profit' ? ' data-cost' : '') + '><h3>' + sec + '</h3>' + qs.map(([q, a]) => '<details class="faq-q" id="faq-' + (++n) + '"><summary>' + q + '</summary><div class="faq-a">' + a + '</div></details>').join('') + '</section>').join('');
   const wrap = document.createElement('div');
   wrap.id = 'faq'; wrap.className = 'faq hidden'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-label', 'Help and FAQ');
   wrap.innerHTML = '<div class="faq-panel"><div class="faq-head"><img class="logo" src="../images/logo.webp" alt="" width="52" height="40"><div><b>Help &amp; FAQ</b><span>Unruly Taste POS · for staff and the owner</span></div><button type="button" class="faq-x" id="faqClose" aria-label="Close help">✕</button></div>' +

@@ -15,3 +15,5 @@ body:has(.faq) .st-btn{display:none}
 .st-actions .st-next{background:#f5c518;color:#111}
 .st-actions .st-x{flex:0 0 auto;background:#e5e5e5;color:#111}
 @media print{.st-btn,.st-hole,.st-tip{display:none!important}}
+/* cashiers (staff role) do not see cost or profit wording */
+.ut-staff [data-cost]{display:none!important}

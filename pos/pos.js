@@ -47,6 +47,8 @@
   let D = null, tab = 'orders', fSrc = 'all', fStat = 'open', ticket = [], tendered = '', custName = '', custNote = '', pollT = null, busy = false, lastOk = 0, dirtySettings = false;
   const ING = () => { const o = {}; (D ? D.ingredients : []).forEach(i => { o[i.id] = i; }); return o; };
   const count = (h, n) => { if (!n) return 1; let c = 0, i = 0; while ((i = h.indexOf(n, i)) >= 0) { c++; i += n.length; } return c; };
+  // Cashier (staff) never sees cost or profit; owner and manager do. Page-only: the server still sends these numbers.
+  const SEE = () => !!(D && D.me && (D.me.role === 'owner' || D.me.role === 'manager'));
   function lineCost(id, choices, qty) {   // same rules as the server (lib/pos.js usage())
     const rec = D && D.recipes[id]; if (!rec) return { cost: 0, noRecipe: true };
     const ing = ING(); let c = 0;
@@ -120,6 +122,7 @@
     $('bellCount').textContent = low; $('bellCount').classList.toggle('hidden', !low);
     const pq = D.printQueued || 0; $('pqCount').textContent = pq; $('pqCount').classList.toggle('hidden', !pq);
     applyCatalog();
+    document.body.classList.toggle('ut-staff', !SEE());   // lets help text / guide hide cost and profit wording for cashiers
     const showAdmin = !(D.settings && D.settings.pos && D.settings.pos.showAdminButton === false);
     const ab = $('adminBtn'); if (ab) ab.classList.toggle('hidden', !showAdmin);
     processPrintQueue();
@@ -137,7 +140,7 @@
       if (c.category) it.sec = c.category;
     }
   }
-  const exampleNote = () => { const n = { example: 0, estimate: 0, real: 0 }; D.ingredients.forEach(i => n[labelOf(i)]++);
+  const exampleNote = () => { if (!SEE()) return ''; const n = { example: 0, estimate: 0, real: 0 }; D.ingredients.forEach(i => n[labelOf(i)]++);
     return '<div class="note">🧪 <b>Costs are not the restaurant\'s real numbers yet.</b> ' + n.estimate + ' ingredients use a <span class="tag est">market estimate</span> (public Guyana shop price; source + date on the Stock tab), ' + n.example + ' are <span class="tag ex">example</span> (made up), ' + n.real + ' are <span class="tag real">real (owner)</span>. Portions are typical fast-food estimates and vendors are placeholders until the owner fills in the ingredient sheet. Profit shown is an estimate.</div>'; };
   const lowBar = () => { const low = D.ingredients.filter(i => i.low); return low.length ? '<div class="alertbar">⚠️ <b>Low stock:</b> ' + low.map(i => esc(i.name) + ' (' + i.stock + ' ' + esc(i.unit) + ')').join(', ') + ' · <u data-go="stock">open Stock</u></div>' : ''; };
   document.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) setTab(g.dataset.go); });
@@ -159,7 +162,7 @@
   function orderCard(o) {
     const lines = o.lines.map((l, i) => '<div class="ln"><span>' + l.qty + '× ' + esc(l.name) + '</span><b>' + (l.lineTotal == null ? '<span class="neg">price TBC</span>' : money(l.lineTotal)) + '</b>' +
       (l.choices ? '<span class="ch">' + esc(l.choices) + '</span>' : '') +
-      '<span class="cp muted">cost ' + money(l.cost) + (l.noRecipe ? ' (no recipe)' : '') + (l.profit == null ? '' : ' · profit ' + pm(l.profit)) + (l.manualPrice ? ' · <i>manual price</i>' : '') + '</span>' +
+      (SEE() ? '<span class="cp muted">cost ' + money(l.cost) + (l.noRecipe ? ' (no recipe)' : '') + (l.profit == null ? '' : ' · profit ' + pm(l.profit)) + (l.manualPrice ? ' · <i>manual price</i>' : '') + '</span>' : (l.manualPrice ? '<span class="cp muted"><i>manual price</i></span>' : '')) +
       (l.lineTotal == null && o.status !== 'collected' ? '<span class="cp"><button class="btn sm" data-price="' + esc(o.no) + '" data-idx="' + i + '">Set ' + esc(l.name) + ' price</button></span>' : '') + '</div>').join('');
     const who = o.source === 'walk-in' ? (o.name ? esc(o.name) : 'Counter customer') + ' · cash' + (o.cash ? ' ' + money(o.cash.tendered) + ', change ' + money(o.cash.change) : '')
       : esc(o.name || 'Customer') + (o.number ? ' · ' + esc(o.number) : '') + ' · ' + esc(o.fulfilment) + (o.address ? ' · ' + esc(o.address) : '');
@@ -175,8 +178,8 @@
       (o.preImport ? '<div class="muted small">Placed before the POS was switched on: stock was not deducted for this one.</div>' : '') +
       '<div class="lines">' + lines + '</div>' +
       '<div class="tot big"><span>Total</span><span>' + money(o.total) + (o.tbc ? ' + TBC' : '') + '</span></div>' +
-      '<div class="tot muted"><span>Est. cost' + (o.tbc ? ', priced lines' : '') + '</span><span>' + money(o.cost) + '</span></div>' +
-      '<div class="tot"><span>Est. profit</span><span>' + pm(o.profit) + ' <span class="muted small">' + pct(o.profit, o.total) + '</span></span></div>' +
+      (SEE() ? '<div class="tot muted"><span>Est. cost' + (o.tbc ? ', priced lines' : '') + '</span><span>' + money(o.cost) + '</span></div>' +
+      '<div class="tot"><span>Est. profit</span><span>' + pm(o.profit) + ' <span class="muted small">' + pct(o.profit, o.total) + '</span></span></div>' : '') +
       (o.ready ? '<div class="note blue small">Ready at ' + time(o.ready.at) + ': ' + esc(o.ready.result) + '</div>' : '') +
       (acts ? '<div class="acts">' + acts + '</div>' : '') + '</div>';
   }
@@ -230,7 +233,7 @@
       h += '<div class="sec-title">' + esc(s.title || s.name || s.id) + '</div><div class="grid">' + items.map(it => {
         const c = defaultCost(it);
         return '<button class="item" data-item="' + it.id + '">' + thumb(it) + '<div class="ib"><b>' + esc(it.name) + '</b>' + (it.day != null ? ' <span class="tag ' + (dayWarn(it) ? 'ph' : 'ready') + '">' + esc(it.dayName) + 's</span>' : '') + '<div class="pr">' + (it.price ? money(it.price) : 'Price to confirm') + '</div>' +
-          '<div class="mg">est. cost ' + money(c) + (it.price ? ' · margin ' + pct(it.price - c, it.price) : '') + '</div></div></button>';
+          (SEE() ? '<div class="mg">est. cost ' + money(c) + (it.price ? ' · margin ' + pct(it.price - c, it.price) : '') + '</div>' : '') + '</div></button>';
       }).join('') + '</div>';
     }
     h += '</div><div class="card ticket" id="ticket"></div></div>';
@@ -243,7 +246,7 @@
     if (!ticket.length) h += '<p class="muted small">Tap menu items to add them.</p>';
     h += ticket.map((l, i) => { const c = lineCost(l.id, l.choices, l.qty).cost, lt = l.unit == null ? null : l.unit * l.qty;
       return '<div class="tl"><b>' + l.qty + '×</b><div>' + esc(l.name) + (l.choices ? '<div class="muted small">' + esc(l.choices) + '</div>' : '') + (dayWarn(byId(l.id)) ? '<div class="small neg">📅 ' + esc(byId(l.id).dayName) + 's only</div>' : '') +
-        '<div class="small muted">cost ' + money(c) + (lt == null ? '' : ' · profit ' + pm(lt - c)) + (l.manual ? ' · manual price' : '') + '</div></div><div style="text-align:right"><b>' + (lt == null ? '–' : money(lt)) + '</b><br><button class="x" data-rm="' + i + '" title="Remove">✕</button></div></div>'; }).join('');
+        (SEE() ? '<div class="small muted">cost ' + money(c) + (lt == null ? '' : ' · profit ' + pm(lt - c)) + (l.manual ? ' · manual price' : '') + '</div>' : (l.manual ? '<div class="small muted">manual price</div>' : '')) + '</div><div style="text-align:right"><b>' + (lt == null ? '–' : money(lt)) + '</b><br><button class="x" data-rm="' + i + '" title="Remove">✕</button></div></div>'; }).join('');
     h += '<div id="ttot"></div>';
     h += '<div class="field"><label>Customer name (optional)</label><input id="cName" maxlength="40" value="' + esc(custName) + '" placeholder="For calling out the order"></div>' +
       '<div class="field"><label>Note (optional)</label><input id="cNote" maxlength="100" value="' + esc(custNote) + '" placeholder="e.g. extra sauce"></div>' +
@@ -255,7 +258,7 @@
   function renderTicketTotals() {
     const tt = $('ttot'); if (!tt) return;
     const tot = total(), cost = ticket.reduce((s, l) => s + lineCost(l.id, l.choices, l.qty).cost, 0);
-    tt.innerHTML = '<div class="tot big" style="margin-top:8px"><span>Total</span><span>' + money(tot) + '</span></div><div class="tot muted"><span>Est. cost (estimates)</span><span>' + money(cost) + '</span></div><div class="tot"><span>Est. profit</span><span>' + pm(tot - cost) + ' <span class="muted small">' + pct(tot - cost, tot) + '</span></span></div>';
+    tt.innerHTML = '<div class="tot big" style="margin-top:8px"><span>Total</span><span>' + money(tot) + '</span></div>' + (SEE() ? '<div class="tot muted"><span>Est. cost (estimates)</span><span>' + money(cost) + '</span></div><div class="tot"><span>Est. profit</span><span>' + pm(tot - cost) + ' <span class="muted small">' + pct(tot - cost, tot) + '</span></span></div>' : '');
     const t = +tendered || 0, chg = $('chg');
     if (chg) chg.innerHTML = !ticket.length ? '' : (t >= tot && t > 0 ? '<div class="change">Change: ' + money(t - tot) + '</div>' : '<div class="change short">' + (t ? 'Short by ' + money(tot - t) : 'Enter cash received') + '</div>');
     const c = $('complete'); if (c) c.disabled = !ticket.length || t < tot || ticket.some(l => l.unit == null);
@@ -284,10 +287,10 @@
       it.groups.forEach((g, i) => { if (!visible(it, g, ch)) return; h += '<div class="field"><label>' + esc(g.label) + '</label><div class="opts">' + g.opts.map((o, k) => '<button class="opt ' + (ch[i] === k ? 'on' : '') + '" data-g="' + i + '" data-k="' + k + '">' + esc(o) + '</button>').join('') + '</div></div>'; });
       if (it.price == null) h += '<div class="field"><label>Price per box (G$): price to confirm, enter what you charge</label><input id="mp" type="number" inputmode="numeric" min="1" value="' + esc(price) + '" placeholder="e.g. 3000"></div>';
       h += '<div class="field"><label>Quantity</label><div class="qty"><button data-qd="-1">−</button><b>' + qty + '</b><button data-qd="1">+</button></div></div>' +
-        '<div class="note small">Line: <b>' + (lt == null ? 'enter price' : money(lt)) + '</b> · est. cost ' + money(c) + (lt == null ? '' : ' · est. profit ' + pm(lt - c)) + ' <span class="tag est">estimated cost</span></div>' +
+        '<div class="note small">Line: <b>' + (lt == null ? 'enter price' : money(lt)) + '</b>' + (SEE() ? ' · est. cost ' + money(c) + (lt == null ? '' : ' · est. profit ' + pm(lt - c)) + ' <span class="tag est">estimated cost</span>' : '') + '</div>' +
         '<div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="addIt">Add to ticket</button></div>';
       openSheet(h);
-      const mp = $('mp'); if (mp) mp.oninput = () => { price = mp.value; const s = summary(it, ch), u = +price || null; const n = document.querySelector('#sheetPanel .note'); if (n) n.innerHTML = 'Line: <b>' + (u ? money(u * qty) : 'enter price') + '</b> · est. cost ' + money(lineCost(it.id, s, qty).cost) + (u ? ' · est. profit ' + pm(u * qty - lineCost(it.id, s, qty).cost) : '') + ' <span class="tag est">estimated cost</span>'; };
+      const mp = $('mp'); if (mp) mp.oninput = () => { price = mp.value; const s = summary(it, ch), u = +price || null; const n = document.querySelector('#sheetPanel .note'); if (n) n.innerHTML = 'Line: <b>' + (u ? money(u * qty) : 'enter price') + '</b>' + (SEE() ? ' · est. cost ' + money(lineCost(it.id, s, qty).cost) + (u ? ' · est. profit ' + pm(u * qty - lineCost(it.id, s, qty).cost) : '') + ' <span class="tag est">estimated cost</span>' : ''); };
       $('sheetPanel').onclick = (e) => {
         const b = e.target.closest('button'); if (!b) return;
         if (b.dataset.g) { ch[+b.dataset.g] = +b.dataset.k; draw(); }
@@ -312,8 +315,8 @@
       const v = i.vendor;
       return '<div class="card si ' + (i.low ? 'low' : '') + '"><div class="sh"><b>' + esc(i.name) + '</b>' + (i.low ? '<span class="tag new">LOW</span>' : '<span class="tag ready">OK</span>') + '</div>' +
         '<div class="sh"><span class="lvl">' + i.stock + ' <span class="small muted">' + esc(i.unit) + '</span></span><span class="small muted">≈ ' + i.servingsLeft + ' servings</span></div><div class="bar"><i style="width:' + pctv + '%"></i></div>' +
-        '<div class="small muted">Minimum: ' + (i.min.kind === 'servings' ? 'enough for ' + i.min.value + ' servings (' + i.threshold + ' ' + esc(i.unit) + ')' : i.min.value + ' ' + esc(i.unit)) + ' · cost ' + money(i.costPerUnit) + '/' + esc(i.unit) + ' ' + costTag(i) + '</div>' +
-        (i.costSource && (i.costSource.url || i.costSource.note) ? '<div class="small muted src">' + (i.costSource.url ? '<a href="' + esc(i.costSource.url) + '" target="_blank" rel="noopener">' + esc(i.costSource.name || 'source') + '</a>' : '') + (i.costSource.pack ? ' · ' + esc(i.costSource.pack) + ' ' + esc(i.costSource.price || '') : '') + (i.costSource.date ? ' · seen ' + esc(i.costSource.date) : '') + (i.costSource.note ? '<br>' + esc(i.costSource.note) : '') + '</div>' : '') +
+        '<div class="small muted">Minimum: ' + (i.min.kind === 'servings' ? 'enough for ' + i.min.value + ' servings (' + i.threshold + ' ' + esc(i.unit) + ')' : i.min.value + ' ' + esc(i.unit)) + (SEE() ? ' · cost ' + money(i.costPerUnit) + '/' + esc(i.unit) + ' ' + costTag(i) : '') + '</div>' +
+        (SEE() && i.costSource && (i.costSource.url || i.costSource.note) ? '<div class="small muted src">' + (i.costSource.url ? '<a href="' + esc(i.costSource.url) + '" target="_blank" rel="noopener">' + esc(i.costSource.name || 'source') + '</a>' : '') + (i.costSource.pack ? ' · ' + esc(i.costSource.pack) + ' ' + esc(i.costSource.price || '') : '') + (i.costSource.date ? ' · seen ' + esc(i.costSource.date) : '') + (i.costSource.note ? '<br>' + esc(i.costSource.note) : '') + '</div>' : '') +
         '<div class="vend">' + (v ? '🚚 ' + esc(v.name) + (v.placeholder ? ' <span class="tag ph">placeholder</span>' : '') + ' · <a href="tel:' + esc(v.phone.replace(/[^\d+]/g, '')) + '">📞 ' + esc(v.phone) + '</a>' + (i.low ? ' <b class="neg">· call this vendor</b>' : '') : '<span class="muted">No vendor set</span>') + '</div>' +
         '<div class="acts"><button class="btn sm" data-stk="add" data-id="' + i.id + '">+ Restock</button><button class="btn sm" data-stk="set" data-id="' + i.id + '">Count / set</button></div></div>';
     }).join('') + '</div>';
@@ -330,13 +333,13 @@
   // ---------- TODAY ----------
   function renderToday() {
     const s = D.summary;
-    let h = '<h2>Today · ' + esc(s.day) + '</h2>' + exampleNote() + '<div class="kpis"><div class="kpi"><b>' + money(s.sales) + '</b><span>Sales (' + s.orders + ' orders)</span></div><div class="kpi"><b>' + money(s.cost) + '</b><span>Est. cost (estimates)</span></div><div class="kpi"><b>' + pm(s.profit) + '</b><span>Est. profit · ' + pct(s.profit, s.sales) + '</span></div><div class="kpi"><b>' + (s.orders ? money(s.sales / s.orders) : '–') + '</b><span>Average order</span></div></div>';
+    let h = '<h2>Today · ' + esc(s.day) + '</h2>' + exampleNote() + '<div class="kpis"><div class="kpi"><b>' + money(s.sales) + '</b><span>Sales (' + s.orders + ' orders)</span></div>' + (SEE() ? '<div class="kpi"><b>' + money(s.cost) + '</b><span>Est. cost (estimates)</span></div><div class="kpi"><b>' + pm(s.profit) + '</b><span>Est. profit · ' + pct(s.profit, s.sales) + '</span></div>' : '') + '<div class="kpi"><b>' + (s.orders ? money(s.sales / s.orders) : '–') + '</b><span>Average order</span></div></div>';
     if (s.tbc) h += '<div class="note">' + s.tbc + ' order(s) have a Hot Box / Wrap Box with price still to confirm (not counted in sales). Set the price on the order card.</div>';
-    h += '<h3>By source</h3><div class="scroll"><table class="t"><tr><th>Source</th><th class="r">Orders</th><th class="r">Sales</th><th class="r">Cost</th><th class="r">Profit</th></tr>' +
-      ['walk-in', 'whatsapp', 'web'].map(k => { const b = s.bySource[k] || { orders: 0, sales: 0, cost: 0, profit: 0 }; return '<tr><td><span class="tag ' + k + '">' + SRC[k] + '</span></td><td class="r">' + b.orders + '</td><td class="r">' + money(b.sales) + '</td><td class="r">' + money(b.cost) + '</td><td class="r">' + pm(b.profit) + '</td></tr>'; }).join('') +
-      '<tr><td><b>Total</b></td><td class="r"><b>' + s.orders + '</b></td><td class="r"><b>' + money(s.sales) + '</b></td><td class="r"><b>' + money(s.cost) + '</b></td><td class="r"><b>' + pm(s.profit) + '</b></td></tr></table></div>';
+    h += '<h3>By source</h3><div class="scroll"><table class="t"><tr><th>Source</th><th class="r">Orders</th><th class="r">Sales</th>' + (SEE() ? '<th class="r">Cost</th><th class="r">Profit</th>' : '') + '</tr>' +
+      ['walk-in', 'whatsapp', 'web'].map(k => { const b = s.bySource[k] || { orders: 0, sales: 0, cost: 0, profit: 0 }; return '<tr><td><span class="tag ' + k + '">' + SRC[k] + '</span></td><td class="r">' + b.orders + '</td><td class="r">' + money(b.sales) + '</td>' + (SEE() ? '<td class="r">' + money(b.cost) + '</td><td class="r">' + pm(b.profit) + '</td>' : '') + '</tr>'; }).join('') +
+      '<tr><td><b>Total</b></td><td class="r"><b>' + s.orders + '</b></td><td class="r"><b>' + money(s.sales) + '</b></td>' + (SEE() ? '<td class="r"><b>' + money(s.cost) + '</b></td><td class="r"><b>' + pm(s.profit) + '</b></td>' : '') + '</tr></table></div>';
     const items = Object.entries(s.items).sort((a, b) => b[1].qty - a[1].qty);
-    h += '<h3>Items sold</h3>' + (items.length ? '<div class="scroll"><table class="t"><tr><th>Item</th><th class="r">Qty</th><th class="r">Sales</th><th class="r">Cost</th></tr>' + items.map(([n, v]) => '<tr><td>' + esc(n) + '</td><td class="r">' + v.qty + '</td><td class="r">' + money(v.sales) + '</td><td class="r">' + money(v.cost) + '</td></tr>').join('') + '</table></div>' : '<div class="empty card">No sales yet today.</div>');
+    h += '<h3>Items sold</h3>' + (items.length ? '<div class="scroll"><table class="t"><tr><th>Item</th><th class="r">Qty</th><th class="r">Sales</th>' + (SEE() ? '<th class="r">Cost</th>' : '') + '</tr>' + items.map(([n, v]) => '<tr><td>' + esc(n) + '</td><td class="r">' + v.qty + '</td><td class="r">' + money(v.sales) + '</td>' + (SEE() ? '<td class="r">' + money(v.cost) + '</td>' : '') + '</tr>').join('') + '</table></div>' : '<div class="empty card">No sales yet today.</div>');
     $('tab-today').innerHTML = h;
   }
 

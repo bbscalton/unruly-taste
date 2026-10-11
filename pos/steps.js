@@ -55,7 +55,7 @@
       TABS
     ],
     today: [
-      S('#tab-today .kpis', "Today's numbers", 'Sales, estimated cost and profit so far today, and the average order.'),
+      S('#tab-today .kpis', "Today's numbers", function () { return document.body.classList.contains('ut-staff') ? 'Your sales so far today, the number of orders and the average order.' : 'Sales, estimated cost and profit so far today, and the average order.'; }),
       S(function () { return $('#tab-today .scroll'); }, 'By source', 'How much came from walk-in, WhatsApp and web orders.'),
       S(function () { var s = document.querySelectorAll('#tab-today .scroll'); return s[1] || $('#tab-today .empty'); }, 'Items sold', 'What sold today and how many.'),
       TABS
@@ -196,7 +196,7 @@
   function draw() {
     var s = steps[idx], total = steps.filter(function (x) { return find(x.sel); }).length;
     var pos = steps.slice(0, idx + 1).filter(function (x) { return find(x.sel); }).length;
-    tip.replaceChildren(el('div', 'st-count', 'Step ' + pos + ' of ' + Math.max(total, pos)), el('div', 'st-title', s.title), el('p', 'st-text', s.text));
+    tip.replaceChildren(el('div', 'st-count', 'Step ' + pos + ' of ' + Math.max(total, pos)), el('div', 'st-title', s.title), el('p', 'st-text', typeof s.text === 'function' ? s.text() : s.text));
     var back = el('button', null, 'Back'), next = el('button', 'st-next', pos >= total ? 'Finish' : 'Next'), x = el('button', 'st-x', 'Close');
     back.type = next.type = x.type = 'button'; back.disabled = pos <= 1;
     back.onclick = function () { go(idx - 1, -1); }; next.onclick = function () { go(idx + 1); }; x.onclick = stop;

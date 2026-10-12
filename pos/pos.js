@@ -171,7 +171,7 @@
     if (D.settings && D.settings.waTestMode !== false) h += '';
     if (!list.length) h += '<div class="empty card">No open orders right now.</div>';
     h += '<div class="orders">' + list.map(o => { const done = o.kitchen && o.kitchen.status === 'done';
-      return '<div class="card order k-order' + (done ? ' k-done' : '') + '"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + '<span class="tag ' + esc(o.source) + '">' + (SRC[o.source] || esc(o.source)) + '</span><span class="tag ' + (done ? 'ready' : 'preparing') + '">' + (done ? 'Done' : 'In progress') + '</span></div>' +
+      return '<div class="card order k-order' + (done ? ' k-done' : '') + '"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + (o.changed ? '<span class="tag chg' + (o.changed.kind === 'cancelled' ? ' cxl' : '') + '">' + (o.changed.kind === 'cancelled' ? 'Cancelled' : 'Changed') + '</span>' : '') + '<span class="tag ' + esc(o.source) + '">' + (SRC[o.source] || esc(o.source)) + '</span><span class="tag ' + (done ? 'ready' : 'preparing') + '">' + (done ? 'Done' : 'In progress') + '</span></div>' +
         '<div class="who">' + esc(o.name || 'Customer') + ' · ' + esc(o.fulfilment) + '<br><span class="muted small">' + time(o.createdAt) + '</span></div>' + (o.note ? '<div class="note">📝 ' + esc(o.note) + '</div>' : '') +
         '<div class="lines">' + o.lines.map(l => '<div class="ln"><span><b>' + l.qty + '×</b> ' + esc(l.name) + '</span>' + (l.choices ? '<span class="ch">' + esc(l.choices) + '</span>' : '') + '</div>').join('') + '</div>' +
         '<div class="acts"><button class="btn ' + (done ? '' : 'green') + '" data-kst="' + (done ? 'in-progress' : 'done') + '" data-kno="' + esc(o.no) + '">' + (done ? '↩ Back to In progress' : '✅ Done') + '</button></div></div>'; }).join('') + '</div>';
@@ -206,7 +206,7 @@
     if (o.status === 'new' || o.status === 'preparing') acts += '<button class="btn green" data-ready="' + esc(o.no) + '">✅ Ready</button>';
     if (o.status === 'ready') acts = '<button class="btn primary" data-st="collected" data-no="' + esc(o.no) + '">Collected</button>';
     acts += '<button class="btn" data-rcpt="' + esc(o.no) + '">🧾 ' + (printedNos().has(o.no) ? 'Reprint' : 'Print receipt') + '</button>';
-    return '<div class="card order"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') +
+    return '<div class="card order"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + (o.changed ? '<span class="tag chg' + (o.changed.kind === 'cancelled' ? ' cxl' : '') + '">' + (o.changed.kind === 'cancelled' ? 'Cancelled' : 'Changed') + '</span>' : '') +
       '<span class="tag ' + o.source + '">' + SRC[o.source] + '</span><span class="tag ' + o.status + '">' + o.status + '</span></div>' +
       '<div class="who">' + who + '<br><span class="muted small">' + time(o.createdAt) + (dayOf(o.createdAt) !== today() ? ' · ' + dayOf(o.createdAt) : '') + (o.botSource ? ' · via ' + (BOT[o.botSource] || o.botSource) : '') + '</span></div>' +
       (o.payment ? '<div class="note small">💵 ' + esc(o.payment.method === 'pay-on-pickup' ? 'Pay on ' + (o.fulfilment === 'delivery' ? 'delivery' : 'pickup') + ' (cash)' : o.payment.method) + ' · ' + esc(o.payment.status) + '</div>' : '') +

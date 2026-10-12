@@ -38,6 +38,8 @@ h3 { font-size:1rem; margin:14px 2px 8px; }
 .tag.new { background:var(--red); color:#fff; } .tag.preparing { background:#f59e0b; color:#111; } .tag.ready { background:var(--green); color:#fff; } .tag.collected { background:#e5e7eb; color:#374151; }
 .tag.ex { background:#fff4c2; color:#7a5b00; border:1px dashed #d4a800; text-transform:none; font-weight:700; } .tag.ph { background:#eee; color:#555; border:1px dashed #999; text-transform:none; }
 .tag.test { background:#ede9fe; color:#5b21b6; }
+.tag.chg { background:#fef3c7; color:#92400e; margin-left:4px; }
+.tag.chg.cxl { background:#fee2e2; color:#991b1b; }
 .orders { display:grid; gap:10px; } @media (min-width:700px) { .orders { grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); } }
 .order .oh { display:flex; align-items:center; gap:6px; flex-wrap:wrap; } .order .ono { font-weight:800; font-size:1rem; margin-right:auto; }
 .order .who { margin:6px 0; font-size:.88rem; } .order .lines { border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); margin:8px 0; padding:6px 0; }

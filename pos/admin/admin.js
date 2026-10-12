@@ -50,6 +50,7 @@
     ['staff', 'Staff & PINs', 'owner'],
     ['customers', 'Customers', 'mgr'],
     ['menu', 'Menu & Prices', 'owner'],
+    ['recipes', 'Ingredients & Recipes', 'owner'],
     ['closed', 'Closed days', 'owner'],
     ['promos', 'Promos', 'mgr'],
     ['shop', 'Shop settings', 'owner'],
@@ -90,6 +91,7 @@
     if (tab === 'staff') return renderStaff();
     if (tab === 'customers') return renderCustomers();
     if (tab === 'menu') return renderMenu();
+    if (tab === 'recipes') return renderRecipes();
     if (tab === 'closed') return renderClosed();
     if (tab === 'promos') return renderPromos();
     if (tab === 'shop') return renderShop();
@@ -139,10 +141,75 @@
     const secs = (M.sections || []).map((s) => s.id);
     $('view').innerHTML = '<h2>Menu &amp; Prices</h2><p class="muted small">Saved on the shop PC and written to Activity. The public website keeps its own menu file; the till and the phone bot use this list. Turning an item off hides it from Walk-in and refuses new orders for it.</p>' +
       '<div class="scroll"><table class="t"><tr><th>Item</th><th>Category</th><th class="r">Price</th><th>On</th><th></th></tr>' +
-      rows().map((c) => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.category || '') + '</td><td class="r">' + (c.price == null ? 'TBC' : money(c.price)) + '</td><td>' + (c.available === false ? '<span class="tag collected">off</span>' : '<span class="tag ready">on</span>') + '</td><td><button class="btn sm" data-medit="' + esc(c.id) + '" type="button">Edit</button></td></tr>').join('') +
+      rows().filter((c) => !c.deleted).map((c) => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.category || '') + '</td><td class="r">' + (c.price == null ? 'TBC' : money(c.price)) + '</td><td>' + (c.available === false ? '<span class="tag collected">off</span>' : '<span class="tag ready">on</span>') + '</td><td><button class="btn sm" data-medit="' + esc(c.id) + '" type="button">Edit</button></td></tr>').join('') +
       '</table></div>';
     $('view').dataset.secs = secs.join(',');
   }
+
+  // ---------- Ingredients & Recipes (12 Oct 2026): add / delete (soft, with undo) / create recipe ----------
+  const ingName = (i) => { const x = (D.ingredients || []).find((g) => g.id === i); return x ? x.name + ' (' + x.unit + ')' : i; };
+  function renderRecipes() {
+    const ings = D.ingredients || [], recs = D.recipes || {};
+    const prod = rows().filter((c) => !c.deleted);
+    let h = '<h2>Ingredients &amp; Recipes</h2><p class="muted small">Stock items are the ingredients below: selling a product takes its recipe\'s ingredients off stock. Blank fields stay blank for Unruly to fill in. Deletes can be undone.</p>';
+    h += '<h3>Ingredients / stock items (' + ings.length + ')</h3><div class="scroll"><table class="t"><tr><th>Ingredient</th><th class="r">Stock</th><th>Unit</th><th>Used by</th><th></th></tr>' +
+      ings.map((i) => { const used = Object.entries(recs).filter(([, r]) => (r.rules || []).some((x) => x.ing === i.id)).length;
+        return '<tr><td>' + esc(i.name) + '</td><td class="r">' + esc(i.stock) + '</td><td>' + esc(i.unit) + '</td><td>' + used + ' recipe(s)</td><td><button class="btn sm" data-idel="' + esc(i.id) + '" data-iname="' + esc(i.name) + '" data-iused="' + used + '" type="button">Delete</button></td></tr>'; }).join('') +
+      '</table></div><div class="acts"><button class="btn primary" id="iAdd" type="button">+ Add ingredient</button></div>';
+    if ((D.deletedIngredients || []).length) h += '<p class="small"><b>Deleted:</b> ' + D.deletedIngredients.map((i) => esc(i.name) + ' <button class="btn sm" data-ires="' + esc(i.id) + '" type="button">Undo</button>').join(' · ') + '</p>';
+    h += '<h3>Recipes</h3><div class="scroll"><table class="t"><tr><th>Product</th><th>Ingredients per serving</th><th></th></tr>' +
+      prod.map((c) => { const r = recs[c.id]; return '<tr><td>' + esc(c.name) + '</td><td class="small">' + (r ? (r.rules || []).map((x) => esc(x.qty) + ' × ' + esc(ingName(x.ing)) + (x.match ? ' if ' + esc(x.match) : '')).join('<br>') : '<span class="muted">no recipe: selling it takes nothing off stock</span>') + '</td><td><button class="btn sm" data-redit="' + esc(c.id) + '" type="button">' + (r ? 'Edit' : 'Create recipe') + '</button>' + (r ? ' <button class="btn sm" data-rdel="' + esc(c.id) + '" data-rname="' + esc(c.name) + '" type="button">Delete</button>' : '') + '</td></tr>'; }).join('') + '</table></div>';
+    if ((D.deletedRecipes || []).length) h += '<p class="small"><b>Deleted recipes:</b> ' + D.deletedRecipes.map((r) => esc((rows().find((c) => c.id === r.id) || { name: r.id }).name) + ' <button class="btn sm" data-rres="' + esc(r.id) + '" type="button">Undo</button>').join(' · ') + '</p>';
+    $('view').innerHTML = h;
+  }
+  async function adminOp(admin, okMsg, reRender) {
+    try { const j = await api('status', { admin }); toast(okMsg); D = await api('sync'); reRender(); return j; } catch (err) { toast(err.message); return null; }
+  }
+  function ingSheet() {
+    openSheet('<h3>Add ingredient</h3><p class="muted small">Leave numbers blank if you don\'t know them yet.</p><div class="field"><label>Name *</label><input id="iName" maxlength="60"></div><div class="field"><label>Unit (kg, L, each…)</label><input id="iUnit" maxlength="12"></div><div class="field"><label>Stock now</label><input id="iStock" inputmode="decimal"></div><div class="field"><label>Cost per unit (G$)</label><input id="iCost" inputmode="decimal"></div><div class="field"><label>Low-stock minimum</label><input id="iMin" inputmode="decimal"></div><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="iSave" type="button">Add</button></div>');
+    $('iSave').onclick = async () => { const j = await adminOp({ op: 'ing-add', name: $('iName').value, unit: $('iUnit').value, stock: $('iStock').value, costPerUnit: $('iCost').value, min: $('iMin').value }, 'Ingredient added', renderRecipes); if (j) closeSheet(); };
+  }
+  function productSheet() {
+    const secs = M.sections || [];
+    openSheet('<h3>Add product</h3><p class="muted small">Shows on the till (Walk-in) and for the phone bot. The public website menu is a separate file. Leave the price blank if it is not set yet. New products start OFF until you switch them on.</p><div class="field"><label>Name *</label><input id="pName" maxlength="80"></div><div class="field"><label>Price (G$)</label><input id="pPrice" inputmode="numeric"></div><div class="field"><label>Category</label><select id="pCat">' + secs.map((x) => '<option value="' + esc(x.id) + '">' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div><label class="small"><input type="checkbox" id="pOn"> Available now</label><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="pSave" type="button">Add</button></div>');
+    $('pSave').onclick = async () => { const j = await adminOp({ op: 'product-add', name: $('pName').value, price: $('pPrice').value, category: $('pCat').value, available: $('pOn').checked }, 'Product added', renderMenu); if (j) closeSheet(); };
+  }
+  function recipeSheet(id) {
+    const c = rows().find((x) => x.id === id); if (!c) return;
+    const cur = ((D.recipes || {})[id] || { rules: [] }).rules.slice();
+    const ings = D.ingredients || [];
+    const row = (r, k) => '<div class="field" data-rrow="' + k + '"><select data-ring>' + '<option value="">Choose ingredient…</option>' + ings.map((i) => '<option value="' + esc(i.id) + '"' + (r.ing === i.id ? ' selected' : '') + '>' + esc(i.name) + ' (' + esc(i.unit) + ')</option>').join('') + '</select> <input data-rqty inputmode="decimal" placeholder="qty per serving" value="' + (r.qty == null ? '' : esc(r.qty)) + '" style="width:9em"> <input data-rmatch placeholder="only if choice contains (optional)" value="' + esc(r.match || '') + '" style="width:12em"> <button class="btn sm" data-rrm type="button">✕</button></div>';
+    const draw = () => {
+      openSheet('<h3>' + (cur.length ? 'Edit' : 'Create') + ' recipe: ' + esc(c.name) + '</h3><p class="muted small">Quantity is per one item sold, in the ingredient\'s unit. Selling this product takes these amounts off stock.</p><div id="rRows">' + cur.map(row).join('') + '</div><button class="btn sm" id="rAddRow" type="button">+ Ingredient</button><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="rSave" type="button">Save recipe</button></div>');
+      const read = () => [...document.querySelectorAll('[data-rrow]')].map((el) => ({ ing: el.querySelector('[data-ring]').value, qty: el.querySelector('[data-rqty]').value, match: el.querySelector('[data-rmatch]').value }));
+      $('rAddRow').onclick = () => { cur.splice(0, cur.length, ...read(), { ing: '', qty: null }); draw(); };
+      $('rRows').onclick = (e) => { const b = e.target.closest('[data-rrm]'); if (!b) return; const all = read(); all.splice(+b.parentElement.dataset.rrow, 1); cur.splice(0, cur.length, ...all); draw(); };
+      $('rSave').onclick = async () => { const rules = read().filter((r) => r.ing).map((r) => ({ ing: r.ing, qty: Number(r.qty), match: r.match })); const j = await adminOp({ op: 'recipe-save', id, rules }, 'Recipe saved', renderRecipes); if (j) closeSheet(); };
+    };
+    if (!cur.length) cur.push({ ing: '', qty: null });
+    draw();
+  }
+  async function confirmDelete(what, name, warn, admin, reRender) {
+    if (!confirm('Delete ' + what + ' "' + name + '"?' + (warn ? '\n\n' + warn : '') + '\n\nYou can undo this afterwards.')) return;
+    try { await api('status', { admin: { ...admin, confirm: true } }); }
+    catch (err) {
+      if (/Open orders still have/.test(err.message) && confirm(err.message + '\n\nDelete anyway?')) { try { await api('status', { admin: { ...admin, confirm: true, force: true } }); } catch (e2) { return toast(e2.message); } }
+      else return toast(err.message);
+    }
+    toast('Deleted. Use Undo to bring it back.'); D = await api('sync'); reRender();
+  }
+  $('view').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'iAdd') return ingSheet();
+    if (b.id === 'pAdd') return productSheet();
+    if (b.dataset.redit) return recipeSheet(b.dataset.redit);
+    if (b.dataset.idel) { if (+b.dataset.iused) return toast(b.dataset.iname + ' is used by ' + b.dataset.iused + ' recipe(s). Remove it from those recipes first.'); return confirmDelete('ingredient', b.dataset.iname, 'It disappears from Stock.', { op: 'ing-delete', id: b.dataset.idel }, renderRecipes); }
+    if (b.dataset.pdel) return confirmDelete('product', b.dataset.pname, 'It is hidden from Walk-in and refused on new orders.', { op: 'product-delete', id: b.dataset.pdel }, renderMenu);
+    if (b.dataset.rdel) return confirmDelete('the recipe for', b.dataset.rname, 'Selling it will no longer take anything off stock.', { op: 'recipe-delete', id: b.dataset.rdel }, renderRecipes);
+    if (b.dataset.ires) return adminOp({ op: 'ing-restore', id: b.dataset.ires }, 'Ingredient restored', renderRecipes);
+    if (b.dataset.pres) return adminOp({ op: 'product-restore', id: b.dataset.pres }, 'Product restored', renderMenu);
+    if (b.dataset.rres) return adminOp({ op: 'recipe-restore', id: b.dataset.rres }, 'Recipe restored', renderRecipes);
+  });
 
   function renderClosed() {
     const shop = (D.settings && D.settings.shop) || { closedWeekdays: [], closedDates: [] };

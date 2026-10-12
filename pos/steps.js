@@ -108,6 +108,15 @@
     menu: [
       S('#view .t', 'Your menu', 'Every item with its price and whether it is on or off.'),
       S('#view [data-medit]', 'Edit an item', 'Tap Edit to change the price or turn the item off. Off items disappear from Walk-in.'),
+      S('#view [data-pdel]', 'Delete a product', 'Tap Delete and confirm. It is hidden from Walk-in. Undo brings it back.'),
+      S('#pAdd', 'Add a product', 'Tap to add a new item. Leave the price blank if it is not set yet.'),
+      TABS
+    ],
+    recipes: [
+      S('#iAdd', 'Add an ingredient', 'Tap to add a stock item. Leave numbers blank if you do not know them yet.'),
+      S('#view [data-idel]', 'Delete an ingredient', 'Only works when no recipe uses it. You can undo it.'),
+      S('#view [data-redit]', 'Create or edit a recipe', 'Pick the ingredients and how much one item uses. Selling it takes that off stock.'),
+      S('#view [data-rdel]', 'Delete a recipe', 'Selling the item will then take nothing off stock. You can undo it.'),
       TABS
     ],
     closed: [

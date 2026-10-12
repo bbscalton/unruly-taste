@@ -137,7 +137,10 @@
   }
   function applyCatalog() {
     for (const c of (D && D.catalog) || []) {
-      const it = M.items.find(i => i.id === c.id); if (!it) continue;
+      let it = M.items.find(i => i.id === c.id);
+      if (!it && c.custom && !c.deleted) { it = { id: c.id, name: c.name, price: c.price, sec: c.category || 'sides', groups: [], custom: true }; M.items.push(it); }   // owner-added product
+      if (!it) continue;
+      if (c.deleted) { it.available = false; continue; }
       if (c.name) it.name = c.name;
       if (c.price === null || typeof c.price === 'number') it.price = c.price;
       it.available = c.available !== false;

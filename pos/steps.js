@@ -113,10 +113,10 @@
       TABS
     ],
     recipes: [
-      S('#iAdd', 'Add an ingredient', 'Tap to add a stock item. Leave numbers blank if you do not know them yet.'),
-      S('#view [data-idel]', 'Delete an ingredient', 'Only works when no recipe uses it. You can undo it.'),
-      S('#view [data-redit]', 'Create or edit a recipe', 'Pick the ingredients and how much one item uses. Selling it takes that off stock.'),
-      S('#view [data-rdel]', 'Delete a recipe', 'Selling the item will then take nothing off stock. You can undo it.'),
+      S('#rpNew', 'Create product', 'Add a new item: name, price, category, description and photo. Give it a recipe, or for ready-made items (ice cream, cookies) a stock count. It starts OFF until you switch it on.'),
+      S('#rSearch', 'Find a product', 'Type part of the name, or pick a category next to it.'),
+      S('#view [data-ropen]', 'Open a product', 'Tap a row to see its recipe. Change quantities, add or remove ingredients, then tap Save recipe. Edit or delete the product from here too.'),
+      S('#ingBox summary', 'Ingredients', 'Tap to open the ingredient list: search, add, edit (name, unit, supplier, cost, stock) or delete an ingredient (only when no recipe uses it).'),
       TABS
     ],
     closed: [

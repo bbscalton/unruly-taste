@@ -50,7 +50,7 @@
     ['staff', 'Staff & PINs', 'owner'],
     ['customers', 'Customers', 'mgr'],
     ['menu', 'Menu & Prices', 'owner'],
-    ['recipes', 'Ingredients & Recipes', 'owner'],
+    ['recipes', 'Products & Recipes', 'owner'],
     ['closed', 'Closed days', 'owner'],
     ['promos', 'Promos', 'mgr'],
     ['shop', 'Shop settings', 'owner'],
@@ -148,22 +148,76 @@
 
   // ---------- Ingredients & Recipes (12 Oct 2026): add / delete (soft, with undo) / create recipe ----------
   const ingName = (i) => { const x = (D.ingredients || []).find((g) => g.id === i); return x ? x.name + ' (' + x.unit + ')' : i; };
+  let rOpen = '', rQ = '', rCat = '', iQ = '', iOpen = false, rDraft = null;
   function renderRecipes() {
-    const ings = D.ingredients || [], recs = D.recipes || {};
-    const prod = rows().filter((c) => !c.deleted);
-    let h = '<h2>Ingredients &amp; Recipes</h2><p class="muted small">Stock items are the ingredients below: selling a product takes its recipe\'s ingredients off stock. Blank fields stay blank for Unruly to fill in. Deletes can be undone.</p>';
-    h += '<h3>Ingredients / stock items (' + ings.length + ')</h3><div class="scroll"><table class="t"><tr><th>Ingredient</th><th class="r">Stock</th><th>Unit</th><th>Used by</th><th></th></tr>' +
-      ings.map((i) => { const used = Object.entries(recs).filter(([, r]) => (r.rules || []).some((x) => x.ing === i.id)).length;
-        return '<tr><td>' + esc(i.name) + '</td><td class="r">' + esc(i.stock) + '</td><td>' + esc(i.unit) + '</td><td>' + used + ' recipe(s)</td><td><button class="btn sm" data-idel="' + esc(i.id) + '" data-iname="' + esc(i.name) + '" data-iused="' + used + '" type="button">Delete</button></td></tr>'; }).join('') +
-      '</table></div><div class="acts"><button class="btn primary" id="iAdd" type="button">+ Add ingredient</button></div>';
-    if ((D.deletedIngredients || []).length) h += '<p class="small"><b>Deleted:</b> ' + D.deletedIngredients.map((i) => esc(i.name) + ' <button class="btn sm" data-ires="' + esc(i.id) + '" type="button">Undo</button>').join(' · ') + '</p>';
-    h += '<h3>Recipes</h3><div class="scroll"><table class="t"><tr><th>Product</th><th>Ingredients per serving</th><th></th></tr>' +
-      prod.map((c) => { const r = recs[c.id]; return '<tr><td>' + esc(c.name) + '</td><td class="small">' + (r ? (r.rules || []).map((x) => esc(x.qty) + ' × ' + esc(ingName(x.ing)) + (x.match ? ' if ' + esc(x.match) : '')).join('<br>') : '<span class="muted">no recipe: selling it takes nothing off stock</span>') + '</td><td><button class="btn sm" data-redit="' + esc(c.id) + '" type="button">' + (r ? 'Edit' : 'Create recipe') + '</button>' + (r ? ' <button class="btn sm" data-rdel="' + esc(c.id) + '" data-rname="' + esc(c.name) + '" type="button">Delete</button>' : '') + '</td></tr>'; }).join('') + '</table></div>';
+    const ings = D.ingredients || [], recs = D.recipes || {}, secs = M.sections || [];
+    const prod = rows().filter((c) => !c.deleted && (!rCat || (c.category || '') === rCat) && (!rQ || c.name.toLowerCase().includes(rQ.toLowerCase())));
+    const tag = (c) => { const r = recs[c.id]; if (!r) return '<span class="tag">no stock link</span>'; const ready = (r.rules || []).length === 1 && /^r-/.test(r.rules[0].ing); return ready ? '<span class="tag ex">ready-made</span>' : '<span class="tag est">recipe</span>'; };
+    let h = '<div class="acts" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Products &amp; Recipes</h2><button class="btn primary" id="rpNew" type="button">+ Create product</button></div>' +
+      '<div class="acts" style="flex-wrap:wrap;gap:6px"><input id="rSearch" type="search" placeholder="Search products" value="' + esc(rQ) + '" style="flex:1;min-width:150px"><select id="rCat"><option value="">All categories</option>' + secs.map((x) => '<option value="' + esc(x.id) + '"' + (rCat === x.id ? ' selected' : '') + '>' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div>';
+    h += '<div class="rlist">' + prod.map((c) => {
+      const open = rOpen === c.id, r = recs[c.id];
+      let row = '<div class="card" style="padding:8px 10px;margin:6px 0"><button type="button" data-ropen="' + esc(c.id) + '" style="all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap"><b style="flex:1;min-width:120px">' + (open ? '▾ ' : '▸ ') + esc(c.name) + '</b><span>' + (c.price == null ? 'TBC' : money(c.price)) + '</span>' + (c.available === false ? '<span class="tag collected">off</span>' : '<span class="tag ready">on</span>') + tag(c) + '</button>';
+      if (open) {
+        const rules = rDraft || (r ? r.rules.map((x) => ({ ...x })) : []);
+        rDraft = rules;
+        row += '<div style="margin-top:8px">' + (rules.length ? '' : '<p class="muted small">No recipe: selling it takes nothing off stock. Add ingredients below to link it.</p>') +
+          rules.map((x, k) => '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0" data-rr="' + k + '"><select data-ring style="flex:2;min-width:140px"><option value="">Choose ingredient…</option>' + ings.map((i) => '<option value="' + esc(i.id) + '"' + (x.ing === i.id ? ' selected' : '') + '>' + esc(i.name) + ' (' + esc(i.unit) + ')</option>').join('') + '</select><input data-rqty inputmode="decimal" placeholder="qty" value="' + (x.qty == null ? '' : esc(x.qty)) + '" style="width:6em">' + (x.match ? '<span class="muted small">if ' + esc(x.match) + '</span>' : '') + '<button class="btn sm" data-rrm="' + k + '" type="button" aria-label="Remove">✕</button></div>').join('') +
+          '<div class="acts" style="flex-wrap:wrap"><button class="btn sm" id="rAddIng" type="button">+ Ingredient</button><button class="btn sm primary" id="rSaveInline" type="button">Save recipe</button></div>' +
+          '<div class="acts" style="flex-wrap:wrap"><button class="btn sm" data-medit="' + esc(c.id) + '" type="button">Edit product</button>' + (r ? '<button class="btn sm" data-rprod="' + esc(c.id) + '" type="button">Make product from this recipe</button><button class="btn sm" data-rdel="' + esc(c.id) + '" data-rname="' + esc(c.name) + '" type="button">Delete recipe</button>' : '') + '<button class="btn sm" data-pdel="' + esc(c.id) + '" data-pname="' + esc(c.name) + '" type="button">Delete product</button></div></div>';
+      }
+      return row + '</div>';
+    }).join('') + (prod.length ? '' : '<p class="muted">No products match.</p>') + '</div>';
     if ((D.deletedRecipes || []).length) h += '<p class="small"><b>Deleted recipes:</b> ' + D.deletedRecipes.map((r) => esc((rows().find((c) => c.id === r.id) || { name: r.id }).name) + ' <button class="btn sm" data-rres="' + esc(r.id) + '" type="button">Undo</button>').join(' · ') + '</p>';
+    if (rows().some((c) => c.deleted)) h += '<p class="small"><b>Deleted products:</b> ' + rows().filter((c) => c.deleted).map((c) => esc(c.name) + ' <button class="btn sm" data-pres="' + esc(c.id) + '" type="button">Undo</button>').join(' · ') + '</p>';
+    const il = ings.filter((i) => !iQ || i.name.toLowerCase().includes(iQ.toLowerCase()));
+    h += '<details id="ingBox"' + (iOpen ? ' open' : '') + ' style="margin-top:14px"><summary><b>Ingredients / stock items (' + ings.length + ')</b></summary>' +
+      '<div class="acts" style="flex-wrap:wrap;gap:6px"><input id="iSearch" type="search" placeholder="Search ingredients" value="' + esc(iQ) + '" style="flex:1;min-width:150px"><button class="btn primary" id="iAdd" type="button">+ Add ingredient</button></div>' +
+      il.map((i) => { const used = Object.entries(recs).filter(([, r]) => (r.rules || []).some((x) => x.ing === i.id)).length;
+        return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid #eee"><span style="flex:1;min-width:140px">' + esc(i.name) + '</span><span class="small">' + esc(i.stock) + ' ' + esc(i.unit) + '</span><span class="small muted">' + used + ' recipe(s)</span><button class="btn sm" data-iedit="' + esc(i.id) + '" type="button">Edit</button><button class="btn sm" data-idel="' + esc(i.id) + '" data-iname="' + esc(i.name) + '" data-iused="' + used + '" type="button">Delete</button></div>'; }).join('') +
+      ((D.deletedIngredients || []).length ? '<p class="small"><b>Deleted:</b> ' + D.deletedIngredients.map((i) => esc(i.name) + ' <button class="btn sm" data-ires="' + esc(i.id) + '" type="button">Undo</button>').join(' · ') + '</p>' : '') + '</details>';
     $('view').innerHTML = h;
   }
+  const readDraft = () => [...document.querySelectorAll('[data-rr]')].map((el) => ({ ...(rDraft[+el.dataset.rr] || {}), ing: el.querySelector('[data-ring]').value, qty: el.querySelector('[data-rqty]').value }));
+  $('view').addEventListener('input', (e) => {
+    if (tab !== 'recipes') return;
+    const t = e.target, pos = t.selectionStart;
+    if (t.id === 'rSearch') { rQ = t.value; rOpen = ''; rDraft = null; renderRecipes(); const n = $('rSearch'); n.focus(); n.setSelectionRange(pos, pos); }
+    if (t.id === 'iSearch') { iQ = t.value; iOpen = true; renderRecipes(); const n = $('iSearch'); n.focus(); n.setSelectionRange(pos, pos); }
+  });
+  $('view').addEventListener('change', (e) => { if (tab === 'recipes' && e.target.id === 'rCat') { rCat = e.target.value; rOpen = ''; rDraft = null; renderRecipes(); } });
+  $('view').addEventListener('toggle', (e) => { if (e.target.id === 'ingBox') iOpen = e.target.open; }, true);
+  $('view').addEventListener('click', async (e) => {
+    if (tab !== 'recipes') return;
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.ropen) { rOpen = rOpen === b.dataset.ropen ? '' : b.dataset.ropen; rDraft = null; return renderRecipes(); }
+    if (b.id === 'rAddIng') { rDraft = readDraft(); rDraft.push({ ing: '', qty: null }); return renderRecipes(); }
+    if (b.dataset.rrm != null) { rDraft = readDraft(); rDraft.splice(+b.dataset.rrm, 1); return renderRecipes(); }
+    if (b.id === 'rSaveInline') {
+      const rules = readDraft().filter((r) => r.ing).map((r) => ({ ing: r.ing, qty: Number(r.qty), match: r.match || '' }));
+      if (!rules.length) return toast('Add an ingredient with a quantity (or use Delete recipe).');
+      const j = await adminOp({ op: 'recipe-save', id: rOpen, rules }, 'Recipe saved', () => { rDraft = null; renderRecipes(); });
+      return j;
+    }
+  });
   async function adminOp(admin, okMsg, reRender) {
     try { const j = await api('status', { admin }); toast(okMsg); D = await api('sync'); reRender(); return j; } catch (err) { toast(err.message); return null; }
+  }
+  function ingEditSheet(id) {
+    const i = (D.ingredients || []).find((x) => x.id === id); if (!i) return;
+    const used = Object.values(D.recipes || {}).filter((r) => (r.rules || []).some((x) => x.ing === id)).length;
+    openSheet('<h3>Edit ' + esc(i.name) + '</h3><p class="muted small">Recipes stay linked when you rename. Leave cost or stock blank to keep them as they are. Every change goes to Activity.</p>' +
+      '<div class="field"><label>Name</label><input id="ieName" maxlength="60" value="' + esc(i.name) + '"></div>' +
+      '<div class="field"><label>Unit</label><input id="ieUnit" maxlength="12" value="' + esc(i.unit) + '">' + (used ? '<div class="small neg">Used by ' + used + ' recipe(s): if you change the unit, check their quantities.</div>' : '') + '</div>' +
+      '<div class="field"><label>Supplier</label><select id="ieVendor"><option value="">(none)</option>' + (D.vendors || []).map((v) => '<option value="' + esc(v.id) + '"' + (v.id === i.vendorId ? ' selected' : '') + '>' + esc(v.name) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Cost per unit (G$), now ' + esc(i.costPerUnit) + '</label><input id="ieCost" inputmode="decimal" placeholder="keep"></div>' +
+      '<div class="field"><label>Stock count, now ' + esc(i.stock) + ' ' + esc(i.unit) + '</label><input id="ieStock" inputmode="decimal" placeholder="keep"></div>' +
+      '<div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="ieSave" type="button">Save</button></div>');
+    $('ieSave').onclick = async () => {
+      if (used && $('ieUnit').value.trim() !== i.unit && !confirm('This ingredient is used by ' + used + ' recipe(s). Changing the unit does not change their quantities. Continue?')) return;
+      const j = await adminOp({ op: 'ing-edit', id, name: $('ieName').value, unit: $('ieUnit').value, vendorId: $('ieVendor').value, costPerUnit: $('ieCost').value, stock: $('ieStock').value }, 'Ingredient saved', () => { iOpen = true; renderRecipes(); });
+      if (j) { closeSheet(); if (j.warn) setTimeout(() => toast(j.warn), 3300); }
+    };
   }
   function ingSheet() {
     openSheet('<h3>Add ingredient</h3><p class="muted small">Leave numbers blank if you don\'t know them yet.</p><div class="field"><label>Name *</label><input id="iName" maxlength="60"></div><div class="field"><label>Unit (kg, L, each…)</label><input id="iUnit" maxlength="12"></div><div class="field"><label>Stock now</label><input id="iStock" inputmode="decimal"></div><div class="field"><label>Cost per unit (G$)</label><input id="iCost" inputmode="decimal"></div><div class="field"><label>Low-stock minimum</label><input id="iMin" inputmode="decimal"></div><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="iSave" type="button">Add</button></div>');
@@ -189,6 +243,50 @@
     if (!cur.length) cur.push({ ing: '', qty: null });
     draw();
   }
+  // "Create recipe + product" / "Make product from this recipe": one form, product is created linked to the recipe, switched OFF.
+  async function uploadMenuImage(file) {
+    if (file.size > 1.5 * 1024 * 1024) throw new Error('Image is over 1.5 MB.');
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const start = await api('status', { image: { op: 'start' } });
+    for (let i = 0; i < buf.length; i += 24000) {
+      let bin = ''; const slice = buf.subarray(i, i + 24000);
+      for (let k = 0; k < slice.length; k++) bin += String.fromCharCode(slice[k]);
+      await api('status', { image: { op: 'chunk', id: start.id, data: btoa(bin) } });
+    }
+    return api('status', { image: { op: 'finish', id: start.id, purpose: 'menu' } });
+  }
+  function recipeProductSheet(fromId) {
+    const ings = D.ingredients || [], secs = M.sections || [];
+    const cur = fromId && (D.recipes || {})[fromId] ? D.recipes[fromId].rules.map((r) => ({ ...r })) : [];
+    let imageId = '', preview = '';
+    const keep = {};
+    const row = (r, k) => '<div class="field" data-rrow="' + k + '"><select data-ring><option value="">Choose ingredient…</option>' + ings.map((i) => '<option value="' + esc(i.id) + '"' + (r.ing === i.id ? ' selected' : '') + '>' + esc(i.name) + ' (' + esc(i.unit) + ')</option>').join('') + '</select> <input data-rqty inputmode="decimal" placeholder="qty per serving" value="' + (r.qty == null ? '' : esc(r.qty)) + '" style="width:9em"> <button class="btn sm" data-rrm type="button">✕</button></div>';
+    const read = () => [...document.querySelectorAll('[data-rrow]')].map((el) => ({ ing: el.querySelector('[data-ring]').value, qty: el.querySelector('[data-rqty]').value }));
+    const grab = () => { ['rpName', 'rpPrice', 'rpCat', 'rpDesc', 'rpStock'].forEach((id) => { if ($(id)) keep[id] = $(id).value; }); };
+    const draw = () => {
+      const from = fromId ? (rows().find((c) => c.id === fromId) || {}).name : '';
+      openSheet('<h3>' + (from ? 'Make a product from the ' + esc(from) + ' recipe' : 'Create recipe + product') + '</h3><p class="muted small">The new product is linked to this recipe (selling it takes these ingredients off stock). It starts <b>OFF</b>: switch it on in Menu &amp; Prices when ready, then it shows on the till and the website. Leave price blank if not set.</p>' +
+        '<div class="field"><label>Product name *</label><input id="rpName" maxlength="80" value="' + esc(keep.rpName || '') + '"></div>' +
+        '<div class="field"><label>Price (G$)</label><input id="rpPrice" inputmode="numeric" value="' + esc(keep.rpPrice || '') + '"></div>' +
+        '<div class="field"><label>Category</label><select id="rpCat">' + secs.map((x) => '<option value="' + esc(x.id) + '"' + (keep.rpCat === x.id ? ' selected' : '') + '>' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label>Description (shown on the website)</label><textarea id="rpDesc" maxlength="300" rows="2">' + esc(keep.rpDesc || '') + '</textarea></div>' +
+        '<div class="field"><label>Photo (optional, JPG/PNG/WEBP under 1.5 MB)</label><input id="rpImg" type="file" accept="image/jpeg,image/png,image/webp">' + (preview ? '<img src="' + preview + '" alt="" style="max-width:160px;display:block;margin-top:6px">' : '') + '</div>' +
+        '<h3>Recipe (per one item sold)</h3><p class="muted small">Ready-made item bought from a vendor (ice cream, cookies…)? Leave the recipe empty and use the stock count below instead.</p><div id="rRows">' + cur.map(row).join('') + '</div><button class="btn sm" id="rAddRow" type="button">+ Ingredient</button>' +
+        '<div class="field"><label>No recipe: stock count (ready-made items, 1 off per sale). Blank = don\'t track stock.</label><input id="rpStock" inputmode="numeric" value="' + esc(keep.rpStock || '') + '"></div>' +
+        '<div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="rpSave" type="button">Create product</button></div>');
+      $('rAddRow').onclick = () => { grab(); cur.splice(0, cur.length, ...read(), { ing: '', qty: null }); draw(); };
+      $('rRows').onclick = (e) => { const b = e.target.closest('[data-rrm]'); if (!b) return; grab(); const all = read(); all.splice(+b.parentElement.dataset.rrow, 1); cur.splice(0, cur.length, ...all); draw(); };
+      $('rpImg').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; grab(); try { toast('Uploading photo…'); const j = await uploadMenuImage(f); imageId = j.imageId; preview = j.preview; toast('Photo saved'); cur.splice(0, cur.length, ...read()); draw(); } catch (err) { toast(err.message); } };
+      $('rpSave').onclick = async () => {
+        const rules = read().filter((r) => r.ing).map((r) => ({ ing: r.ing, qty: Number(r.qty) }));
+        if (rules.length && $('rpStock').value.trim()) return toast('Use either a recipe or a stock count, not both.');
+        if (!rules.length && !$('rpStock').value.trim() && !confirm('No recipe and no stock count: sales of this item will not change stock. Continue?')) return;
+        const j = await adminOp({ op: 'product-add', name: $('rpName').value, price: $('rpPrice').value, category: $('rpCat').value, desc: $('rpDesc').value, imageId, rules, resaleStock: rules.length ? '' : $('rpStock').value.trim(), available: false }, 'Product + recipe created (OFF until you switch it on)', renderRecipes);
+        if (j) closeSheet();
+      };
+    };
+    draw();
+  }
   async function confirmDelete(what, name, warn, admin, reRender) {
     if (!confirm('Delete ' + what + ' "' + name + '"?' + (warn ? '\n\n' + warn : '') + '\n\nYou can undo this afterwards.')) return;
     try { await api('status', { admin: { ...admin, confirm: true } }); }
@@ -201,13 +299,16 @@
   $('view').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'iAdd') return ingSheet();
+    if (b.dataset.iedit) return ingEditSheet(b.dataset.iedit);
+    if (b.id === 'rpNew') return recipeProductSheet(null);
+    if (b.dataset.rprod) return recipeProductSheet(b.dataset.rprod);
     if (b.id === 'pAdd') return productSheet();
     if (b.dataset.redit) return recipeSheet(b.dataset.redit);
     if (b.dataset.idel) { if (+b.dataset.iused) return toast(b.dataset.iname + ' is used by ' + b.dataset.iused + ' recipe(s). Remove it from those recipes first.'); return confirmDelete('ingredient', b.dataset.iname, 'It disappears from Stock.', { op: 'ing-delete', id: b.dataset.idel }, renderRecipes); }
-    if (b.dataset.pdel) return confirmDelete('product', b.dataset.pname, 'It is hidden from Walk-in and refused on new orders.', { op: 'product-delete', id: b.dataset.pdel }, renderMenu);
-    if (b.dataset.rdel) return confirmDelete('the recipe for', b.dataset.rname, 'Selling it will no longer take anything off stock.', { op: 'recipe-delete', id: b.dataset.rdel }, renderRecipes);
+    if (b.dataset.pdel) return confirmDelete('product', b.dataset.pname, 'It is hidden from Walk-in and refused on new orders.', { op: 'product-delete', id: b.dataset.pdel }, () => (tab === 'recipes' ? (rOpen = '', rDraft = null, renderRecipes()) : renderMenu()));
+    if (b.dataset.rdel) return confirmDelete('the recipe for', b.dataset.rname, 'Selling it will no longer take anything off stock.', { op: 'recipe-delete', id: b.dataset.rdel }, () => { rDraft = null; renderRecipes(); });
     if (b.dataset.ires) return adminOp({ op: 'ing-restore', id: b.dataset.ires }, 'Ingredient restored', renderRecipes);
-    if (b.dataset.pres) return adminOp({ op: 'product-restore', id: b.dataset.pres }, 'Product restored', renderMenu);
+    if (b.dataset.pres) return adminOp({ op: 'product-restore', id: b.dataset.pres }, 'Product restored', () => (tab === 'recipes' ? renderRecipes() : renderMenu()));
     if (b.dataset.rres) return adminOp({ op: 'recipe-restore', id: b.dataset.rres }, 'Recipe restored', renderRecipes);
   });
 
@@ -415,7 +516,7 @@
       const recipeRules = rec && rec.rules ? rec.rules.map((r, k) => ({ ...r, qty: Number($('sheetPanel').querySelector('[data-rq="' + k + '"]').value) })) : undefined;
       try {
         await api('status', { admin: { op: 'menu', id, name: $('mName').value, price: $('mPrice').value, category: $('mCat').value, available: $('mOn').checked, recipe: recipeRules } });
-        closeSheet(); toast('Menu saved'); D = await api('sync'); renderMenu();
+        closeSheet(); toast('Menu saved'); D = await api('sync'); tab === 'recipes' ? renderRecipes() : renderMenu();
       } catch (err) { toast(err.message); }
     };
   }

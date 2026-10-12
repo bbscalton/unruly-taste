@@ -10,6 +10,8 @@ window.UT_CONFIG = {
   // AI order assistant behind the header "Call" (voice) and "WhatsApp" (text chat) buttons. Public API path only, no keys here.
   // Set to '' to make the two buttons go back to a plain phone call / WhatsApp link.
   ASSISTANT_API: 'https://unruly.neuereatec.org/api/web',
+  // Buy button: order goes to the shop POS (12 Oct 2026). '' = old send-on-WhatsApp checkout.
+  ORDER_API: 'https://unruly.neuereatec.org/api/web/order',
   // POS / Admin app-only switch (see pos/gate.js). false = pages open in any browser (default, current behaviour).
   // true = pos/ and pos/admin/ show 'Open this in the Unruly POS app' unless opened inside the app (UA marker UnrulyPOS/x or the
   // UnrulyAndroid bridge). This only hides the pages; the PINs, rate limiting and the server are the real protection.

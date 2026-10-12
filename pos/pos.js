@@ -111,8 +111,9 @@
 
   // ---------- tabs ----------
   $('tabs').addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
-  $('bell').addEventListener('click', () => setTab('stock'));
+  $('bell').addEventListener('click', () => { if (SEE()) setTab('stock'); });
   function setTab(t) {
+    if ((t === 'stock' || t === 'today') && D && !SEE()) t = 'orders';   // cashier: no Stock / Today
     tab = t; document.querySelectorAll('#tabs button').forEach(b => { const on = b.dataset.tab === t; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     document.querySelectorAll('.tab').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + t));
     if (t !== 'settings') dirtySettings = false;
@@ -126,7 +127,9 @@
     $('bellCount').textContent = low; $('bellCount').classList.toggle('hidden', !low);
     const pq = D.printQueued || 0; $('pqCount').textContent = pq; $('pqCount').classList.toggle('hidden', !pq);
     applyCatalog();
-    document.body.classList.toggle('ut-staff', !SEE());   // lets help text / guide hide cost and profit wording for cashiers
+    document.body.classList.toggle('ut-staff', !SEE());
+    { const see = SEE(); document.querySelectorAll('#tabs [data-tab="stock"], #tabs [data-tab="today"]').forEach(b => b.classList.toggle('hidden', !see)); $('bell').classList.toggle('hidden', !see);
+      if (!see && (tab === 'stock' || tab === 'today')) setTab('orders'); }   // lets help text / guide hide cost and profit wording for cashiers
     const showAdmin = !(D.settings && D.settings.pos && D.settings.pos.showAdminButton === false);
     const ab = $('adminBtn'); if (ab) ab.classList.toggle('hidden', !showAdmin);
     processPrintQueue();
@@ -150,7 +153,7 @@
   }
   const exampleNote = () => { if (!SEE()) return ''; const n = { example: 0, estimate: 0, real: 0 }; D.ingredients.forEach(i => n[labelOf(i)]++);
     return '<div class="note">🧪 <b>Costs are not the restaurant\'s real numbers yet.</b> ' + n.estimate + ' ingredients use a <span class="tag est">market estimate</span> (public Guyana shop price; source + date on the Stock tab), ' + n.example + ' are <span class="tag ex">example</span> (made up), ' + n.real + ' are <span class="tag real">real (owner)</span>. Portions are typical fast-food estimates and vendors are placeholders until the owner fills in the ingredient sheet. Profit shown is an estimate.</div>'; };
-  const lowBar = () => { const low = D.ingredients.filter(i => i.low); return low.length ? '<div class="alertbar">⚠️ <b>Low stock:</b> ' + low.map(i => esc(i.name) + ' (' + i.stock + ' ' + esc(i.unit) + ')').join(', ') + ' · <u data-go="stock">open Stock</u></div>' : ''; };
+  const lowBar = () => { if (!SEE()) return ''; const low = D.ingredients.filter(i => i.low); return low.length ? '<div class="alertbar">⚠️ <b>Low stock:</b> ' + low.map(i => esc(i.name) + ' (' + i.stock + ' ' + esc(i.unit) + ')').join(', ') + ' · <u data-go="stock">open Stock</u></div>' : ''; };
   document.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) setTab(g.dataset.go); });
 
   // ---------- ORDERS ----------
@@ -241,6 +244,8 @@
       const items = M.items.filter(i => i.sec === s.id && i.available !== false); if (!items.length) continue;
       h += '<div class="sec-title">' + esc(s.title || s.name || s.id) + '</div><div class="grid">' + items.map(it => {
         const c = defaultCost(it);
+        const out = !SEE() && (D.soldOut || []).includes(it.id);   // cashier: sold out = greyed + blocked, no numbers
+        if (out) return '<button class="item" disabled aria-disabled="true" style="opacity:.45;filter:grayscale(1);cursor:not-allowed">' + thumb(it) + '<div class="ib"><b>' + esc(it.name) + '</b><div><span class="tag collected">Sold out</span></div></div></button>';
         return '<button class="item" data-item="' + it.id + '">' + thumb(it) + '<div class="ib"><b>' + esc(it.name) + '</b>' + (it.day != null ? ' <span class="tag ' + (dayWarn(it) ? 'ph' : 'ready') + '">' + esc(it.dayName) + 's</span>' : '') + '<div class="pr">' + (it.price ? money(it.price) : 'Price to confirm') + '</div>' +
           (SEE() ? '<div class="mg">est. cost ' + money(c) + (it.price ? ' · margin ' + pct(it.price - c, it.price) : '') + '</div>' : '') + '</div></button>';
       }).join('') + '</div>';
@@ -317,6 +322,7 @@
 
   // ---------- STOCK ----------
   function renderStock() {
+    if (!SEE()) return;
     const el = $('tab-stock');
     let h = lowBar() + '<h2>Stock</h2>' + exampleNote() + '<p class="muted small">Every completed order (walk-in, WhatsApp, web) deducts ingredients automatically from the recipes. Going below a minimum shows here and sends ONE WhatsApp alert to the shop\'s own chat' + (D.settings.lowStockWhatsApp ? '' : ' (alerts are switched OFF in Settings)') + '. The POS never orders from or messages vendors.</p><div class="stock">';
     h += D.ingredients.slice().sort((a, b) => (b.low - a.low) || a.name.localeCompare(b.name)).map(i => {
@@ -341,6 +347,7 @@
 
   // ---------- TODAY ----------
   function renderToday() {
+    if (!SEE()) return;
     const s = D.summary;
     let h = '<h2>Today · ' + esc(s.day) + '</h2>' + exampleNote() + '<div class="kpis"><div class="kpi"><b>' + money(s.sales) + '</b><span>Sales (' + s.orders + ' orders)</span></div>' + (SEE() ? '<div class="kpi"><b>' + money(s.cost) + '</b><span>Est. cost (estimates)</span></div><div class="kpi"><b>' + pm(s.profit) + '</b><span>Est. profit · ' + pct(s.profit, s.sales) + '</span></div>' : '') + '<div class="kpi"><b>' + (s.orders ? money(s.sales / s.orders) : '–') + '</b><span>Average order</span></div></div>';
     if (D.settings.payments) h += '<div class="note small">💳 <b>Payments:</b> cash / pay on pickup: on · ' + esc(D.settings.payments.mmg) + (D.settings.payments.outlet ? ' · Outlet features: ' + (D.settings.payments.outlet.ok ? esc(Object.keys(D.settings.payments.outlet.features).filter(k => D.settings.payments.outlet.features[k].connected).join(', ') || 'none connected') : 'not reachable (' + esc(D.settings.payments.outlet.error) + '), cash only') : '') + '</div>';

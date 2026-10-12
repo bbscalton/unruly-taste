@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>/* one-time cache clear per build: unregisters service workers, empties Cache Storage, reloads once */
-(function(){var B='20261012-g',K='ut_build';try{if(localStorage.getItem(K)===B)return;localStorage.setItem(K,B);}catch(e){return;}
+(function(){var B='20261012-h',K='ut_build';try{if(localStorage.getItem(K)===B)return;localStorage.setItem(K,B);}catch(e){return;}
 var jobs=[];try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));}));}catch(e){}
 try{if(window.caches&&caches.keys)jobs.push(caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x);}));}));}catch(e){}
 var go=function(){var u=new URL(location.href);u.searchParams.set('b',B);location.replace(u.toString());};
@@ -55,7 +55,7 @@ Promise.all(jobs).then(go,go);})();</script>
 <script src="vendor/qrcode.js?v=3"></script>
 <script src="receipt.js?v=3"></script>
 <script src="printer/driver.js?v=3"></script>
-<script src="pos.js?v=20261012g"></script>
+<script src="pos.js?v=20261012h"></script>
 <script src="faq.js?v=3"></script>
 <script src="steps.js?v=20261012g"></script>
 </body>

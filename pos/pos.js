@@ -19,7 +19,7 @@
   const srcText = (s) => (s ? [s.name, s.pack && s.price ? s.pack + ': ' + s.price : '', s.calc, s.date ? 'seen ' + s.date : '', s.note].filter(Boolean).join(' · ') : '');
   const costTag = (i) => { const l = labelOf(i), t = srcText(i.costSource); return '<span class="tag ' + LBL[l][0] + '"' + (t ? ' title="' + esc(t) + '"' : '') + '>' + LBL[l][1] + '</span>'; };
   const recTag = (r) => { const l = r && LBL[r.label] ? r.label : (r && r.example === false ? 'real' : 'example'); return '<span class="tag ' + LBL[l][0] + '">' + (l === 'estimate' ? 'estimated portions' : LBL[l][1]) + '</span>'; };
-  const BOT = { phone: 'WhatsApp call', 'web-chat': 'web chat', 'web-voice': 'web voice' };
+  const BOT = { phone: 'WhatsApp call', 'web-chat': 'web chat', 'web-voice': 'web voice', 'web-checkout': 'website Buy' };
   const time = (iso) => new Date(iso).toLocaleTimeString('en-US', { timeZone: CFG.TIME_ZONE || 'America/Guyana', hour: 'numeric', minute: '2-digit' });
   const dayOf = (iso) => new Date(iso).toLocaleDateString('en-CA', { timeZone: CFG.TIME_ZONE || 'America/Guyana' });
   const today = () => dayOf(new Date().toISOString());
@@ -68,7 +68,11 @@
   async function sync(force) {
     if (busy && !force) return;
     try {
-      const j = await api('sync'); D = j; lastOk = Date.now();
+      const j = await api('sync');
+      const seen = D && D.orders ? new Set(D.orders.map(o => o.no)) : null;
+      const fresh = seen ? j.orders.filter(o => !seen.has(o.no) && o.source !== 'walk-in') : [];
+      D = j; lastOk = Date.now();
+      if (fresh.length) { toast('🔔 New order ' + fresh.map(o => o.no).join(', '), 8000); try { const a = new (window.AudioContext || window.webkitAudioContext)(), g = a.createGain(), os = a.createOscillator(); os.frequency.value = 880; g.gain.value = 0.15; os.connect(g); g.connect(a.destination); os.start(); os.stop(a.currentTime + 0.35); } catch (x) {} }
       $('syncState').textContent = 'live · ' + time(j.serverTime); $('syncState').className = 'sync ok';
       renderAll();
     } catch (e) { $('syncState').textContent = 'offline: ' + e.message.slice(0, 40); $('syncState').className = 'sync bad'; }
@@ -160,7 +164,7 @@
     el.innerHTML = h;
   }
   function orderCard(o) {
-    const lines = o.lines.map((l, i) => '<div class="ln"><span>' + l.qty + '× ' + esc(l.name) + '</span><b>' + (l.lineTotal == null ? '<span class="neg">price TBC</span>' : money(l.lineTotal)) + '</b>' +
+    const lines = o.lines.map((l, i) => '<div class="ln"><span>' + l.qty + '× ' + esc(l.name) + (l.id ? ' <span class="muted small">[' + esc(String(l.id).toUpperCase()) + ']</span>' : '') + '</span><b>' + (l.lineTotal == null ? '<span class="neg">price TBC</span>' : money(l.lineTotal)) + '</b>' +
       (l.choices ? '<span class="ch">' + esc(l.choices) + '</span>' : '') +
       (SEE() ? '<span class="cp muted">cost ' + money(l.cost) + (l.noRecipe ? ' (no recipe)' : '') + (l.profit == null ? '' : ' · profit ' + pm(l.profit)) + (l.manualPrice ? ' · <i>manual price</i>' : '') + '</span>' : (l.manualPrice ? '<span class="cp muted"><i>manual price</i></span>' : '')) +
       (l.lineTotal == null && o.status !== 'collected' ? '<span class="cp"><button class="btn sm" data-price="' + esc(o.no) + '" data-idx="' + i + '">Set ' + esc(l.name) + ' price</button></span>' : '') + '</div>').join('');
@@ -174,6 +178,7 @@
     return '<div class="card order"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') +
       '<span class="tag ' + o.source + '">' + SRC[o.source] + '</span><span class="tag ' + o.status + '">' + o.status + '</span></div>' +
       '<div class="who">' + who + '<br><span class="muted small">' + time(o.createdAt) + (dayOf(o.createdAt) !== today() ? ' · ' + dayOf(o.createdAt) : '') + (o.botSource ? ' · via ' + (BOT[o.botSource] || o.botSource) : '') + '</span></div>' +
+      (o.payment ? '<div class="note small">💵 ' + esc(o.payment.method === 'pay-on-pickup' ? 'Pay on ' + (o.fulfilment === 'delivery' ? 'delivery' : 'pickup') + ' (cash)' : o.payment.method) + ' · ' + esc(o.payment.status) + '</div>' : '') +
       (o.note ? '<div class="note">📝 ' + esc(o.note) + '</div>' : '') +
       (o.preImport ? '<div class="muted small">Placed before the POS was switched on: stock was not deducted for this one.</div>' : '') +
       '<div class="lines">' + lines + '</div>' +
@@ -334,6 +339,7 @@
   function renderToday() {
     const s = D.summary;
     let h = '<h2>Today · ' + esc(s.day) + '</h2>' + exampleNote() + '<div class="kpis"><div class="kpi"><b>' + money(s.sales) + '</b><span>Sales (' + s.orders + ' orders)</span></div>' + (SEE() ? '<div class="kpi"><b>' + money(s.cost) + '</b><span>Est. cost (estimates)</span></div><div class="kpi"><b>' + pm(s.profit) + '</b><span>Est. profit · ' + pct(s.profit, s.sales) + '</span></div>' : '') + '<div class="kpi"><b>' + (s.orders ? money(s.sales / s.orders) : '–') + '</b><span>Average order</span></div></div>';
+    if (s.testOrders) h += '<div class="note blue small">🧪 ' + s.testOrders + ' TEST order(s) today are not counted in these totals.</div>';
     if (s.tbc) h += '<div class="note">' + s.tbc + ' order(s) have a Hot Box / Wrap Box with price still to confirm (not counted in sales). Set the price on the order card.</div>';
     h += '<h3>By source</h3><div class="scroll"><table class="t"><tr><th>Source</th><th class="r">Orders</th><th class="r">Sales</th>' + (SEE() ? '<th class="r">Cost</th><th class="r">Profit</th>' : '') + '</tr>' +
       ['walk-in', 'whatsapp', 'web'].map(k => { const b = s.bySource[k] || { orders: 0, sales: 0, cost: 0, profit: 0 }; return '<tr><td><span class="tag ' + k + '">' + SRC[k] + '</span></td><td class="r">' + b.orders + '</td><td class="r">' + money(b.sales) + '</td>' + (SEE() ? '<td class="r">' + money(b.cost) + '</td><td class="r">' + pm(b.profit) + '</td>' : '') + '</tr>'; }).join('') +

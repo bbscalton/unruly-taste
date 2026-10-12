@@ -22,7 +22,7 @@
       S('#tab-orders .chips', 'Filter the orders', 'Pick where orders came from (Walk-in, WhatsApp, Web) and whether to show Open or Collected ones.'),
       S('#tab-orders .order, #tab-orders .empty', 'An order', 'Each card is one order: who it is for, what they ordered and the total. WhatsApp and web orders appear by themselves.'),
       S('#tab-orders .order [data-st][data-no], #tab-orders .order [data-ready]', 'Move the order along', 'Start preparing, then Ready when the food is done, then Collected when the customer takes it.'),
-      S('#tab-orders .order [data-rcpt]', 'Receipt', 'Tap to see, print or save the receipt for this order.'),
+      S('#tab-orders .order [data-rcpt]', 'Receipt', 'Tap to see, print or save the receipt for this order. After Collected the receipt opens: print it, or send it on WhatsApp.'),
       S('#pqBtn', 'Print queue', 'Receipts waiting to print are listed here.'),
       S('#bell', 'Low stock bell', 'A number here means something is running low. Tap it to see what.'),
       S('#adminBtn', 'Admin (owner or manager)', 'Opens the owner side. It asks for an owner or manager PIN.'),
@@ -41,6 +41,7 @@
       S('#ttot', 'Total and change', 'Shows the total and the change to give back. Red means they have not given enough yet.'),
       S('#complete', 'Complete the sale', 'Tap when the money is in your hand. The sale is saved and the receipt opens.'),
       S('#sheetPanel .rc-stage', 'The receipt', 'This is what the customer gets. Check the items and change.'),
+      S('#waNum', 'WhatsApp receipt (optional)', 'If the customer wants the receipt on WhatsApp, type their number (7 digits) and tap Send on WhatsApp. Nothing prints then. Leave it blank to print as usual. If sending fails, it prints instead.'),
       S('#sheetPanel [data-rp=print]', 'Print the receipt', 'Tap Print to print it, or use Save as PDF.'),
       S('#sheetPanel [data-close]', 'Close', 'Tap Close to finish and start the next sale.'),
       TABS
@@ -53,6 +54,11 @@
       S('#sqOk', 'Save', 'Tap to save the new stock number.'),
       S('#tab-stock .vend', 'Who to call', 'The supplier for this item. Tap the phone number to call.'),
       TABS
+    ],
+    kitchen: [
+      S('#tab-orders .k-order, #tab-orders .empty', 'An order', 'Each card is one order: what to make, the choices and any note. New orders appear by themselves.'),
+      S('#tab-orders [data-kst]', 'In progress / Done', 'Tap Done when the food is ready. Tap again to put it back to In progress.'),
+      S('#signOutBtn', 'Sign out', 'Tap when you finish your shift.')
     ],
     today: [
       S('#tab-today .kpis', "Today's numbers", function () { return document.body.classList.contains('ut-staff') ? 'Your sales so far today, the number of orders and the average order.' : 'Sales, estimated cost and profit so far today, and the average order.'; }),
@@ -69,6 +75,7 @@
     ],
     receipt: [
       S('#sheetPanel .rc-stage', 'The receipt', 'This is what the customer gets. Check the items, total and change.'),
+      S('#waNum', 'WhatsApp receipt (optional)', 'Type the customer\'s WhatsApp number (7 digits) and tap Send on WhatsApp instead of printing. Blank = print as usual. If it fails, it prints instead.'),
       S('#sheetPanel .chips', 'Paper size', 'Pick 80 mm or 58 mm to match your receipt paper.'),
       S('#sheetPanel [data-rp=print]', 'Print', 'Tap to print the receipt, or use Save as PDF next to it.'),
       S('#sheetPanel [data-rp=queue]', 'Print queue', 'Tap to print it later with the other waiting receipts.'),
@@ -176,6 +183,7 @@
       if (!ADMIN && $('#addIt')) return 'item';
       return 'sheet';
     }
+    if (!ADMIN && document.body.classList.contains('ut-kitchen')) return 'kitchen';
     var on = $('#tabs button.on'); var t = on && on.dataset.tab;
     return t && SET[t] ? t : (ADMIN ? 'staff' : 'orders');
   }

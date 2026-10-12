@@ -121,6 +121,8 @@
   }
   function renderAll(forceSettings) {
     if (!D) return;
+    if (D.kitchen) return renderKitchen();
+    document.body.classList.remove('ut-kitchen');
     const open = D.orders.filter(o => o.status !== 'collected').length, low = D.ingredients.filter(i => i.low).length;
     $('openCount').textContent = open; $('openCount').classList.toggle('hidden', !open);
     $('lowCount').textContent = low; $('lowCount').classList.toggle('hidden', !low);
@@ -157,6 +159,28 @@
   document.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) setTab(g.dataset.go); });
 
   // ---------- ORDERS ----------
+  // ---------- KITCHEN (12 Oct 2026): orders only, In progress / Done. No prices, stock, walk-in or admin. ----------
+  function renderKitchen() {
+    document.body.classList.add('ut-kitchen');
+    document.querySelectorAll('#tabs, #adminBtn, #pqBtn, #bell').forEach(x => x.classList.add('hidden'));
+    document.querySelectorAll('.tab').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-orders'));
+    const el = $('tab-orders');
+    if (el.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.kst) return;
+    const list = D.orders || [];
+    let h = '<h2>Kitchen · orders</h2><p class="muted small">New till and website orders appear here by themselves (checked every few seconds). Tap an order\'s button to switch it between <b>In progress</b> and <b>Done</b>.</p>';
+    if (D.settings && D.settings.waTestMode !== false) h += '';
+    if (!list.length) h += '<div class="empty card">No open orders right now.</div>';
+    h += '<div class="orders">' + list.map(o => { const done = o.kitchen && o.kitchen.status === 'done';
+      return '<div class="card order k-order' + (done ? ' k-done' : '') + '"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + '<span class="tag ' + esc(o.source) + '">' + (SRC[o.source] || esc(o.source)) + '</span><span class="tag ' + (done ? 'ready' : 'preparing') + '">' + (done ? 'Done' : 'In progress') + '</span></div>' +
+        '<div class="who">' + esc(o.name || 'Customer') + ' · ' + esc(o.fulfilment) + '<br><span class="muted small">' + time(o.createdAt) + '</span></div>' + (o.note ? '<div class="note">📝 ' + esc(o.note) + '</div>' : '') +
+        '<div class="lines">' + o.lines.map(l => '<div class="ln"><span><b>' + l.qty + '×</b> ' + esc(l.name) + '</span>' + (l.choices ? '<span class="ch">' + esc(l.choices) + '</span>' : '') + '</div>').join('') + '</div>' +
+        '<div class="acts"><button class="btn ' + (done ? '' : 'green') + '" data-kst="' + (done ? 'in-progress' : 'done') + '" data-kno="' + esc(o.no) + '">' + (done ? '↩ Back to In progress' : '✅ Done') + '</button></div></div>'; }).join('') + '</div>';
+    el.innerHTML = h;
+  }
+  $('tab-orders').addEventListener('click', async (e) => {
+    const t = e.target.closest('button[data-kst]'); if (!t || !D || !D.kitchen) return;
+    t.disabled = true; await act('kitchen', { no: t.dataset.kno, status: t.dataset.kst }, 'Order ' + t.dataset.kno + ': ' + (t.dataset.kst === 'done' ? 'Done' : 'In progress'));
+  });
   function renderOrders() {
     const el = $('tab-orders');
     let list = D.orders.filter(o => (fSrc === 'all' || o.source === fSrc) && (fStat === 'all' || (fStat === 'open' ? o.status !== 'collected' : o.status === 'collected')));
@@ -193,12 +217,15 @@
       (SEE() ? '<div class="tot muted"><span>Est. cost' + (o.tbc ? ', priced lines' : '') + '</span><span>' + money(o.cost) + '</span></div>' +
       '<div class="tot"><span>Est. profit</span><span>' + pm(o.profit) + ' <span class="muted small">' + pct(o.profit, o.total) + '</span></span></div>' : '') +
       (o.ready ? '<div class="note blue small">Ready at ' + time(o.ready.at) + ': ' + esc(o.ready.result) + '</div>' : '') +
+      (o.kitchen ? '<div class="note small">👩‍🍳 Kitchen: <b>' + (o.kitchen.status === 'done' ? 'Done' : 'In progress') + '</b> · ' + time(o.kitchen.at) + (o.kitchenReadyMsg ? ' · ready message: ' + esc(o.kitchenReadyMsg.result) : '') + '</div>' : '') +
+      ((o.waReceipts || []).length ? '<div class="note small">📱 WhatsApp receipt: ' + o.waReceipts.map(w => esc(w.to) + ' ' + (w.ok ? (w.test ? 'sent (TEST MODE, own chat)' : 'sent') : 'failed: ' + esc(w.error))).join('; ') + '</div>' : '') +
       (acts ? '<div class="acts">' + acts + '</div>' : '') + '</div>';
   }
   $('tab-orders').addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return;
     if (t.dataset.src) { fSrc = t.dataset.src; return renderOrders(); }
-    if (t.dataset.st && t.dataset.no) return act('status', { no: t.dataset.no, status: t.dataset.st }, 'Order ' + t.dataset.no + ': ' + t.dataset.st);
+    if (t.dataset.st && t.dataset.no) { const j = await act('status', { no: t.dataset.no, status: t.dataset.st }, 'Order ' + t.dataset.no + ': ' + t.dataset.st);
+      if (j && j.order && t.dataset.st === 'collected') receiptSheet(j.order, null, '✅ ' + j.order.no + ' collected · receipt'); return; }
     if (t.dataset.ready) return readyDialog(t.dataset.ready);
     if (t.dataset.price) return priceDialog(t.dataset.price, +t.dataset.idx);
     if (t.dataset.rcpt) { const o = D.orders.find(x => x.no === t.dataset.rcpt); if (o) receiptSheet(o); }
@@ -566,11 +593,25 @@
         '<div class="chips"><button class="chip ' + (w === 80 ? 'on' : '') + '" data-rw="80">80 mm</button><button class="chip ' + (w === 58 ? 'on' : '') + '" data-rw="58">58 mm</button></div>' +
         '<div class="rc-stage">' + job.html + '</div>' +
         '<div class="note small">🖨️ Printer: <b>' + esc(drv ? drv.label : 'none') + '</b>. ' + (PR().driver === 'none' ? 'No receipt printer installed yet: use Print (any printer this device has) or Save as PDF.' : '') + '</div>' +
+        '<div class="card wa-rc"><label for="waNum"><b>📱 Send receipt on WhatsApp</b> <span class="muted small">(optional)</span></label>' +
+        '<div class="wa-row"><input id="waNum" type="tel" inputmode="numeric" maxlength="16" placeholder="7 digits, e.g. 600 1234" autocomplete="off"><button class="btn" data-rp="wa" type="button">Send on WhatsApp</button></div>' +
+        '<p class="muted small">Leave it blank and tap Print to print as usual. If a number is sent, nothing is printed.' + (D && D.settings && D.settings.waTestMode !== false ? ' <b>TEST MODE:</b> goes to the shop\'s own chat only.' : '') + '</p><p class="err small" id="waErr"></p></div>' +
         '<div class="acts rc-acts"><button class="btn primary" data-rp="print">🖨️ Print</button><button class="btn" data-rp="pdf">📄 Save as PDF</button><button class="btn" data-rp="txt">⬇️ Download .txt</button><button class="btn" data-rp="queue">➕ Add to print queue</button><button class="btn" data-close>Close</button></div>');
       $('sheetPanel').onclick = async (e) => {
         const b = e.target.closest('button'); if (!b) return;
         if (b.dataset.rw) { w = +b.dataset.rw; return draw(); }
         if (b.dataset.rp === 'print') return browserPrint(job);
+        if (b.dataset.rp === 'wa') {
+          const raw = ($('waNum').value || '').replace(/\D/g, '');
+          $('waErr').textContent = '';
+          if (!raw) return browserPrint(job);   // blank: print exactly as before
+          const n = raw.length === 7 ? '592' + raw : raw;
+          if (!/^592\d{7}$/.test(n)) { $('waErr').textContent = 'Use a Guyana number: 7 digits, or 592 + 7 digits.'; return; }
+          b.disabled = true;
+          try { const r = await api('wa-receipt', { no: o.no, number: n }); toast('📱 Receipt sent on WhatsApp to ' + r.to + (r.test ? ' (TEST MODE: own chat)' : ''), 6000); closeSheet(); sync(true); }
+          catch (err) { $('waErr').textContent = '⚠️ ' + err.message; toast('⚠️ WhatsApp failed, printing instead', 6000); b.disabled = false; browserPrint(job); }
+          return;
+        }
         if (b.dataset.rp === 'pdf') { toast('In the print dialog choose "Save as PDF" as the printer.', 5000); return browserPrint(job); }
         if (b.dataset.rp === 'txt') return download('receipt-' + o.no + '-' + w + 'mm.txt', job.text);
         if (b.dataset.rp === 'queue') { b.disabled = true; const j = await act('status', { print: { op: 'queue', no: o.no } }, 'Added to the print queue'); if (j && j.already) toast('Already in the print queue (' + j.job.note + ')'); b.disabled = false; }
@@ -628,7 +669,7 @@
     if (role === 'owner') {
       if (!adminUsers) { try { const j = await api('status', { admin: { op: 'users' } }); adminUsers = j.users || []; adminAudit = j.audit || []; } catch (e) { h += '<div class="note">' + esc(e.message) + '</div>'; } }
       h += '<h3>Staff</h3><div class="card"><div class="scroll"><table class="t"><tr><th>Name</th><th>Role</th><th></th></tr>' + (adminUsers || []).map(u => '<tr><td>' + esc(u.name) + (u.disabled ? ' <span class="tag collected">off</span>' : '') + '</td><td>' + esc(u.role) + '</td><td><button class="btn sm" data-upin="' + esc(u.id) + '">New PIN</button></td></tr>').join('') + '</table></div>' +
-        '<h3>Add manager or staff</h3><div class="field"><label>Name</label><input id="nuName" maxlength="40"></div><div class="field"><label>Role</label><select id="nuRole" style="width:auto"><option value="staff">staff</option><option value="manager">manager</option></select></div><div class="field"><label>PIN (8+ characters)</label><input id="nuPin" type="password" autocomplete="new-password"></div><button class="btn" id="nuAdd" type="button">Add user</button></div>';
+        '<h3>Add manager or staff</h3><div class="field"><label>Name</label><input id="nuName" maxlength="40"></div><div class="field"><label>Role</label><select id="nuRole" style="width:auto"><option value="staff">staff</option><option value="manager">manager</option><option value="kitchen">kitchen</option></select></div><div class="field"><label>PIN (8+ characters)</label><input id="nuPin" type="password" autocomplete="new-password"></div><button class="btn" id="nuAdd" type="button">Add user</button></div>';
     }
     const P = D.promo || { customers: [] };
     h += '<h3>Customers</h3><div class="card"><p class="muted small">Numbers stay masked in the list. Edit shows the full number to the owner or a manager, and every change is written to the audit log (who, when, before, after).</p>' +

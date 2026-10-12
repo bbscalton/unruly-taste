@@ -25,7 +25,7 @@
       S('#tab-orders .order [data-rcpt]', 'Receipt', 'Tap to see, print or save the receipt for this order. After Collected the receipt opens: print it, or send it on WhatsApp.'),
       S('#pqBtn', 'Print queue', 'Receipts waiting to print are listed here.'),
       S('#bell', 'Low stock bell', 'A number here means something is running low. Tap it to see what.'),
-      S('#adminBtn', 'Admin (owner or manager)', 'Opens the owner side. It asks for an owner or manager PIN.'),
+      S('#adminBtn', 'Admin (owner, admin or manager)', 'Opens the owner side. It asks for an owner, admin or manager PIN.'),
       S('#signOutBtn', 'Sign out', 'Tap when you finish your shift so nobody else uses your login.'),
       TABS
     ],

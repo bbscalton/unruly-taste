@@ -59,18 +59,20 @@
   $('outBtn').addEventListener('click', () => { token = ''; sessionStorage.removeItem(KEY); location.reload(); });
 
   const TABS = [
-    ['staff', 'Staff & PINs', 'owner'],
+    ['staff', 'Staff & PINs', 'ownerOnly'],
     ['customers', 'Customers', 'mgr'],
     ['menu', 'Menu & Prices', 'owner'],
     ['recipes', 'Products & Recipes', 'owner'],
     ['closed', 'Closed days', 'owner'],
     ['promos', 'Promos', 'mgr'],
     ['shop', 'Shop settings', 'owner'],
-    ['browser', 'Browser access', 'owner'],
+    ['browser', 'Browser access', 'ownerOnly'],
     ['activity', 'Activity', 'owner']
   ];
   const role = () => (D && D.me && D.me.role) || '';
-  const allowed = (need) => need === 'mgr' ? (role() === 'owner' || role() === 'manager') : role() === 'owner';
+  const ROLE_LABEL = { owner: 'owner', admin: 'admin', manager: 'manager', staff: 'staff (cashier)', kitchen: 'kitchen' };
+  // 'owner' tabs: owner + admin. 'ownerOnly': the owner alone (Staff & PINs, Browser access). 'mgr': + manager.
+  const allowed = (need) => need === 'mgr' ? ['owner', 'admin', 'manager'].includes(role()) : need === 'ownerOnly' ? role() === 'owner' : (role() === 'owner' || role() === 'admin');
 
   function drawTabs() {
     const vis = TABS.filter((t) => allowed(t[2]));
@@ -85,9 +87,9 @@
 
   async function boot() {
     D = await api('sync'); useCats();
-    if (!D.me || D.me.scope !== 'admin' || (role() !== 'owner' && role() !== 'manager')) {
+    if (!D.me || D.me.scope !== 'admin' || !['owner', 'admin', 'manager'].includes(role())) {
       token = ''; sessionStorage.removeItem(KEY);
-      return showLogin('This PIN is for the till only. Admin needs an owner or manager PIN.');
+      return showLogin('This PIN is for the till only. Admin needs an owner, admin or manager PIN.');
     }
     hideLogin(); drawTabs(); render();
   }
@@ -135,8 +137,9 @@
     catch (e) { $('view').innerHTML = '<div class="note">' + esc(e.message) + '</div>'; return; }
     $('view').innerHTML = '<h2>Staff &amp; PINs</h2><p class="muted small">Only the owner sees this. PINs are stored hashed. Changing a PIN signs that person out.</p>' +
       '<div class="card"><div class="scroll"><table class="t"><tr><th>Name</th><th>Role</th><th></th></tr>' +
-      users.map((u) => '<tr><td>' + esc(u.name) + (u.disabled ? ' <span class="tag collected">off</span>' : '') + '</td><td>' + esc(u.role) + '</td><td><button class="btn sm" data-upin="' + esc(u.id) + '" type="button">New PIN</button> ' + (u.role === 'owner' ? '' : (u.disabled ? '<button class="btn sm" data-uon="' + esc(u.id) + '" type="button">Turn back on</button>' : '<button class="btn sm" data-uoff="' + esc(u.id) + '" data-uname="' + esc(u.name) + '" type="button" style="background:#b3261e;color:#fff">Remove</button>')) + '</td></tr>').join('') +
-      '</table></div><h3>Add manager, staff or kitchen</h3><div class="field"><label>Name</label><input id="nuName" maxlength="40"></div><div class="field"><label>Role</label><select id="nuRole" style="width:auto"><option value="staff">staff (cashier)</option><option value="manager">manager</option><option value="kitchen">kitchen (orders screen only)</option></select></div><div class="field"><label>PIN (8+ characters)</label><input id="nuPin" type="password" autocomplete="new-password"></div><button class="btn" id="nuAdd" type="button">Add user</button></div>';
+      users.map((u) => '<tr><td>' + esc(u.name) + (u.disabled ? ' <span class="tag collected">off</span>' : '') + '</td><td>' + esc(ROLE_LABEL[u.role] || u.role) + (u.role === 'owner' ? ' <span class="tag ready">permanent</span>' : '') + '</td><td><button class="btn sm" data-upin="' + esc(u.id) + '" type="button">New PIN</button> ' +
+        (u.role === 'owner' ? '' : u.disabled ? '<button class="btn sm" data-uon="' + esc(u.id) + '" type="button">Turn back on</button> <button class="btn sm" data-udel="' + esc(u.id) + '" data-uname="' + esc(u.name) + '" type="button" style="background:#b3261e;color:#fff">Delete</button>' : '<button class="btn sm" data-uoff="' + esc(u.id) + '" data-uname="' + esc(u.name) + '" type="button" style="background:#b3261e;color:#fff">Remove</button>') + '</td></tr>').join('') +
+      '</table></div><h3>Add admin, manager, staff or kitchen</h3><div class="field"><label>Name</label><input id="nuName" maxlength="40"></div><div class="field"><label>Role</label><select id="nuRole" style="width:auto"><option value="">Pick a role…</option><option value="admin">admin (everything except Staff &amp; PINs)</option><option value="manager">manager (customers and promos)</option><option value="staff">staff (cashier: till only)</option><option value="kitchen">kitchen (kitchen orders screen only)</option></select></div><div class="field"><label>PIN (6+ digits, or 8+ characters; must be different from everyone else\'s)</label><input id="nuPin" type="password" autocomplete="new-password"></div><button class="btn" id="nuAdd" type="button">Add user</button><p class="err small" id="nuErr"></p></div>';
   }
 
   function renderCustomers() {
@@ -469,8 +472,18 @@
     const b = e.target.closest('button'); if (!b) return;
     try {
       if (b.id === 'nuAdd') {
-        const j = await api('status', { admin: { op: 'user-add', name: $('nuName').value, role: $('nuRole').value, pin: $('nuPin').value } });
-        toast('User added'); return renderStaff();
+        const name = $('nuName').value.trim(), r = $('nuRole').value, pin = $('nuPin').value.trim();
+        const bad = !name ? 'Type a name.' : !r ? 'Pick a role.' : !(/^\d+$/.test(pin) ? pin.length >= 6 : pin.length >= 8) ? 'PIN must be 6+ digits, or 8+ characters.' : '';
+        if (bad) { $('nuErr').textContent = bad; return; }
+        b.disabled = true; $('nuErr').textContent = '';
+        try { await api('status', { admin: { op: 'user-add', name, role: r, pin } }); }
+        catch (err) { $('nuErr').textContent = err.message; b.disabled = false; return; }
+        toast('Added ' + name + ' as ' + (ROLE_LABEL[r] || r)); return renderStaff();
+      }
+      if (b.dataset.udel) {
+        if (!confirm('Delete ' + (b.dataset.uname || 'this user') + ' for good? Their history stays in the Activity log.')) return;
+        await api('status', { admin: { op: 'user-delete', id: b.dataset.udel } });
+        toast('User deleted'); return renderStaff();
       }
       if (b.dataset.uoff) {
         if (!confirm('Remove ' + (b.dataset.uname || 'this user') + '? Their PIN stops working right away. Their history stays in the Activity log, and you can turn them back on later.')) return;
@@ -482,7 +495,7 @@
         toast('User turned back on'); return renderStaff();
       }
       if (b.dataset.upin) {
-        const pin = prompt('New PIN (8+ characters). The old PIN stops working.');
+        const pin = prompt('New PIN (6+ digits, or 8+ characters, different from everyone else\'s). The old PIN stops working.');
         if (!pin) return;
         await api('status', { admin: { op: 'user-pin', id: b.dataset.upin, pin } });
         return toast('PIN changed');

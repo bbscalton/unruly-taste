@@ -48,7 +48,7 @@
   const ING = () => { const o = {}; (D ? D.ingredients : []).forEach(i => { o[i.id] = i; }); return o; };
   const count = (h, n) => { if (!n) return 1; let c = 0, i = 0; while ((i = h.indexOf(n, i)) >= 0) { c++; i += n.length; } return c; };
   // Cashier (staff) never sees cost or profit; owner and manager do. Page-only: the server still sends these numbers.
-  const SEE = () => !!(D && D.me && (D.me.role === 'owner' || D.me.role === 'manager'));
+  const SEE = () => !!(D && D.me && ['owner', 'admin', 'manager'].includes(D.me.role));
   function lineCost(id, choices, qty) {   // same rules as the server (lib/pos.js usage())
     const rec = D && D.recipes[id]; if (!rec) return { cost: 0, noRecipe: true };
     const ing = ING(); let c = 0;
@@ -95,7 +95,7 @@
 
   const so = $('signOutBtn'); if (so) so.addEventListener('click', () => { localStorage.removeItem(TOKEN_KEY); location.reload(); });
   const abtn = $('adminBtn'); if (abtn) abtn.addEventListener('click', () => {
-    openSheet('<h3>Open Admin</h3><p>Enter an <b>owner or manager</b> PIN. This is checked on the shop PC. A staff PIN does not open Admin, even if this till is already signed in.</p><div class="field"><label>PIN</label><input id="adminPin" type="password" autocomplete="current-password"></div><p class="err" id="adminPinErr"></p><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="adminGo" type="button">Continue</button></div>');
+    openSheet('<h3>Open Admin</h3><p>Enter an <b>owner, admin or manager</b> PIN. This is checked on the shop PC. A staff PIN does not open Admin, even if this till is already signed in.</p><div class="field"><label>PIN</label><input id="adminPin" type="password" autocomplete="current-password"></div><p class="err" id="adminPinErr"></p><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="adminGo" type="button">Continue</button></div>');
     setTimeout(() => { const i = $('adminPin'); if (i) i.focus(); }, 50);
     $('adminGo').onclick = async () => {
       $('adminGo').disabled = true; $('adminPinErr').textContent = '';
@@ -413,7 +413,7 @@
       '<div class="field"><label>Business phone (receipts only)</label><input data-sr="phone" value="' + esc(SD.settings.receipt.phone || '') + '" maxlength="20" placeholder="(not set)" style="max-width:220px"></div>' +
       '<label class="small"><input type="checkbox" id="printStation"' + (localStorage.getItem(PS_KEY) === '1' ? ' checked' : '') + '> This device is the print station (prints queued receipts automatically once a real printer driver is chosen)</label></div>';
     const WDN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const owner = D.me && D.me.role === 'owner';
+    const owner = D.me && (D.me.role === 'owner' || D.me.role === 'admin');
     h += '<h3 id="closedDays">Shop closed days' + (owner ? '' : ' (owner)') + '</h3><div class="card" id="closedCard"><p class="muted small">A scheduled promo on a closed day is skipped (nothing is sent) and you get one note on the shop chat. Weekly repeats skip that week. A blast already going out stops at midnight if the next day is closed.</p>' +
       '<div class="chips">' + WDN.map((n, i) => '<label class="chip' + (SD.settings.shop.closedWeekdays.includes(i) ? ' on' : '') + '"><input type="checkbox" data-cwd="' + i + '"' + (SD.settings.shop.closedWeekdays.includes(i) ? ' checked' : '') + (owner ? '' : ' disabled') + '> ' + n + '</label>').join('') + '</div>' +
       '<p class="small">One-off closed dates</p><ul class="small">' + (SD.settings.shop.closedDates.map(d => '<li>' + esc(d) + (owner ? ' <button class="btn sm" data-cdd="' + esc(d) + '">remove</button>' : '') + '</li>').join('') || '<li class="muted">None</li>') + '</ul>' +
@@ -662,14 +662,14 @@
 
   // ---------- ADMIN (owner: users. owner/manager: customers) ----------
   let adminUsers = null, adminAudit = null;
-  const canBlast = () => D.me && (D.me.role === 'owner' || D.me.role === 'manager');
+  const canBlast = () => D.me && ['owner', 'admin', 'manager'].includes(D.me.role);
   async function renderAdmin() {
     const role = D.me && D.me.role;
     let h = '<h2>Admin</h2><p class="muted small">Signed in as <b>' + esc((D.me && D.me.name) || '') + '</b> (' + esc(role || '') + '). Staff can take orders. Only the owner or a manager can change customers or send promos. Only the owner changes PINs.</p>';
     if (role === 'owner') {
       if (!adminUsers) { try { const j = await api('status', { admin: { op: 'users' } }); adminUsers = j.users || []; adminAudit = j.audit || []; } catch (e) { h += '<div class="note">' + esc(e.message) + '</div>'; } }
       h += '<h3>Staff</h3><div class="card"><div class="scroll"><table class="t"><tr><th>Name</th><th>Role</th><th></th></tr>' + (adminUsers || []).map(u => '<tr><td>' + esc(u.name) + (u.disabled ? ' <span class="tag collected">off</span>' : '') + '</td><td>' + esc(u.role) + '</td><td><button class="btn sm" data-upin="' + esc(u.id) + '">New PIN</button></td></tr>').join('') + '</table></div>' +
-        '<h3>Add manager or staff</h3><div class="field"><label>Name</label><input id="nuName" maxlength="40"></div><div class="field"><label>Role</label><select id="nuRole" style="width:auto"><option value="staff">staff</option><option value="manager">manager</option><option value="kitchen">kitchen</option></select></div><div class="field"><label>PIN (8+ characters)</label><input id="nuPin" type="password" autocomplete="new-password"></div><button class="btn" id="nuAdd" type="button">Add user</button></div>';
+        '<h3>Add manager or staff</h3><div class="field"><label>Name</label><input id="nuName" maxlength="40"></div><div class="field"><label>Role</label><select id="nuRole" style="width:auto"><option value="staff">staff (cashier)</option><option value="admin">admin</option><option value="manager">manager</option><option value="kitchen">kitchen</option></select></div><div class="field"><label>PIN (8+ characters)</label><input id="nuPin" type="password" autocomplete="new-password"></div><button class="btn" id="nuAdd" type="button">Add user</button></div>';
     }
     const P = D.promo || { customers: [] };
     h += '<h3>Customers</h3><div class="card"><p class="muted small">Numbers stay masked in the list. Edit shows the full number to the owner or a manager, and every change is written to the audit log (who, when, before, after).</p>' +

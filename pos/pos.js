@@ -136,6 +136,7 @@
     else if (tab === 'today') renderToday();
   }
   function applyCatalog() {
+    if (D && Array.isArray(D.categories) && D.categories.length) M.sections = D.categories.filter(c => !c.deleted).map(c => ({ id: c.id, title: c.title }));   // owner categories
     for (const c of (D && D.catalog) || []) {
       let it = M.items.find(i => i.id === c.id);
       if (!it && c.custom && !c.deleted) { it = { id: c.id, name: c.name, price: c.price, sec: c.category || 'sides', groups: [], custom: true }; M.items.push(it); }   // owner-added product

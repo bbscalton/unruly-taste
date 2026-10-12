@@ -116,7 +116,7 @@
       S('#rpNew', 'Create product', 'Add a new item: name, price, category, description and photo. Give it a recipe, or for ready-made items (ice cream, cookies) a stock count. It starts OFF until you switch it on.'),
       S('#rSearch', 'Find a product', 'Type part of the name, or pick a category next to it.'),
       S('#view [data-ropen]', 'Open a product', 'Tap a row to see its recipe. Change quantities, add or remove ingredients, then tap Save recipe. Edit or delete the product from here too.'),
-      S('#ingBox summary', 'Ingredients', 'Tap to open the ingredient list: search, add, edit (name, unit, supplier, cost, stock) or delete an ingredient (only when no recipe uses it).'),
+      S('#ingBox summary', 'Ingredients', 'Categories: open the Categories section to add, rename or delete one (delete only when no product uses it). In a product form choose + New category… to make one on the spot. Ingredients: tap to open the ingredient list: search, add, edit (name, unit, supplier, cost, stock) or delete an ingredient (only when no recipe uses it).'),
       TABS
     ],
     closed: [

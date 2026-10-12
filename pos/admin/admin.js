@@ -8,10 +8,22 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = (n) => 'G$' + Math.round(Number(n) || 0).toLocaleString('en-US');
   let token = sessionStorage.getItem(KEY) || '';
-  let D = null, tab = 'customers', toastT;
+  let D = null, tab = 'customers', toastT, cOpen = false;
 
   function toast(m) { const t = $('toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 3200); }
-  function openSheet(html) { $('sheetPanel').innerHTML = html; $('sheet').classList.remove('hidden'); }
+  function openSheet(html) { $('sheetPanel').innerHTML = html; $('sheet').classList.remove('hidden');
+    ['pCat', 'rpCat', 'mCat'].forEach((id) => { const el = $(id); if (el && !el.querySelector('[value="__new"]')) el.insertAdjacentHTML('beforeend', '<option value="__new">+ New category…</option>'); });
+  }
+  // Categories (12 Oct 2026): live list from the bot (base menu sections + owner-added), deleted ones left out
+  function useCats() { if (D && Array.isArray(D.categories) && D.categories.length) M.sections = D.categories.filter((c) => !c.deleted).map((c) => ({ id: c.id, title: c.title })); }
+  document.addEventListener('change', async (e) => {
+    const el = e.target; if (!el.matches || !el.matches('#pCat,#rpCat,#mCat') || el.value !== '__new') return;
+    const name = (prompt('New category name (for example: Local Drinks)') || '').trim();
+    if (!name) { el.selectedIndex = 0; return; }
+    try { const j = await api('status', { admin: { op: 'cat-add', title: name } }); D = await api('sync'); useCats();
+      el.querySelector('[value="__new"]').insertAdjacentHTML('beforebegin', '<option value="' + esc(j.id) + '">' + esc(j.title) + '</option>'); el.value = j.id; toast('Category added'); }
+    catch (err) { toast(err.message); el.selectedIndex = 0; }
+  });
   function closeSheet() { $('sheet').classList.add('hidden'); $('sheetPanel').innerHTML = ''; }
   $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet' || e.target.closest('[data-close]')) closeSheet(); });
 
@@ -72,7 +84,7 @@
   });
 
   async function boot() {
-    D = await api('sync');
+    D = await api('sync'); useCats();
     if (!D.me || D.me.scope !== 'admin' || (role() !== 'owner' && role() !== 'manager')) {
       token = ''; sessionStorage.removeItem(KEY);
       return showLogin('This PIN is for the till only. Admin needs an owner or manager PIN.');
@@ -87,7 +99,7 @@
   }
 
   async function render() {
-    drawTabs();
+    useCats(); drawTabs();
     if (tab === 'staff') return renderStaff();
     if (tab === 'customers') return renderCustomers();
     if (tab === 'menu') return renderMenu();
@@ -141,23 +153,23 @@
     const secs = (M.sections || []).map((s) => s.id);
     $('view').innerHTML = '<h2>Menu &amp; Prices</h2><p class="muted small">Saved on the shop PC and written to Activity. The public website keeps its own menu file; the till and the phone bot use this list. Turning an item off hides it from Walk-in and refuses new orders for it.</p>' +
       '<div class="scroll"><table class="t"><tr><th>Item</th><th>Category</th><th class="r">Price</th><th>On</th><th></th></tr>' +
-      rows().filter((c) => !c.deleted).map((c) => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.category || '') + '</td><td class="r">' + (c.price == null ? 'TBC' : money(c.price)) + '</td><td>' + (c.available === false ? '<span class="tag collected">off</span>' : '<span class="tag ready">on</span>') + '</td><td><button class="btn sm" data-medit="' + esc(c.id) + '" type="button">Edit</button></td></tr>').join('') +
+      rows().filter((c) => !c.deleted).map((c) => '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.category || '') + '</td><td class="r">' + (c.price == null ? 'TBC' : money(c.price)) + '</td><td>' + onSwitch(c) + '</td><td><button class="btn sm" data-medit="' + esc(c.id) + '" type="button">Edit</button></td></tr>').join('') +
       '</table></div>';
     $('view').dataset.secs = secs.join(',');
   }
 
   // ---------- Ingredients & Recipes (12 Oct 2026): add / delete (soft, with undo) / create recipe ----------
   const ingName = (i) => { const x = (D.ingredients || []).find((g) => g.id === i); return x ? x.name + ' (' + x.unit + ')' : i; };
-  let rOpen = '', rQ = '', rCat = '', iQ = '', iOpen = false, rDraft = null;
+  let rOpen = '', rQ = '', rCat = '', rOn = '', iQ = '', iOpen = false, rDraft = null;
   function renderRecipes() {
     const ings = D.ingredients || [], recs = D.recipes || {}, secs = M.sections || [];
-    const prod = rows().filter((c) => !c.deleted && (!rCat || (c.category || '') === rCat) && (!rQ || c.name.toLowerCase().includes(rQ.toLowerCase())));
+    const prod = rows().filter((c) => !c.deleted && (!rOn || (rOn === 'off') === (c.available === false)) && (!rCat || (c.category || '') === rCat) && (!rQ || c.name.toLowerCase().includes(rQ.toLowerCase())));
     const tag = (c) => { const r = recs[c.id]; if (!r) return '<span class="tag">no stock link</span>'; const ready = (r.rules || []).length === 1 && /^r-/.test(r.rules[0].ing); return ready ? '<span class="tag ex">ready-made</span>' : '<span class="tag est">recipe</span>'; };
     let h = '<div class="acts" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Products &amp; Recipes</h2><button class="btn primary" id="rpNew" type="button">+ Create product</button></div>' +
-      '<div class="acts" style="flex-wrap:wrap;gap:6px"><input id="rSearch" type="search" placeholder="Search products" value="' + esc(rQ) + '" style="flex:1;min-width:150px"><select id="rCat"><option value="">All categories</option>' + secs.map((x) => '<option value="' + esc(x.id) + '"' + (rCat === x.id ? ' selected' : '') + '>' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div>';
+      '<div class="acts" style="flex-wrap:wrap;gap:6px"><input id="rSearch" type="search" placeholder="Search products" value="' + esc(rQ) + '" style="flex:1;min-width:150px"><select id="rOn"><option value="">On + off</option><option value="on"' + (rOn === 'on' ? ' selected' : '') + '>On only</option><option value="off"' + (rOn === 'off' ? ' selected' : '') + '>Off only</option></select><select id="rCat"><option value="">All categories</option>' + secs.map((x) => '<option value="' + esc(x.id) + '"' + (rCat === x.id ? ' selected' : '') + '>' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div>';
     h += '<div class="rlist">' + prod.map((c) => {
       const open = rOpen === c.id, r = recs[c.id];
-      let row = '<div class="card" style="padding:8px 10px;margin:6px 0"><button type="button" data-ropen="' + esc(c.id) + '" style="all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap"><b style="flex:1;min-width:120px">' + (open ? '▾ ' : '▸ ') + esc(c.name) + '</b><span>' + (c.price == null ? 'TBC' : money(c.price)) + '</span>' + (c.available === false ? '<span class="tag collected">off</span>' : '<span class="tag ready">on</span>') + tag(c) + '</button>';
+      let row = '<div class="card" style="padding:8px 10px;margin:6px 0"><button type="button" data-ropen="' + esc(c.id) + '" style="all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap">' + ((u) => u ? '<img src="' + esc(u) + '" alt="" loading="lazy" style="width:40px;height:40px;object-fit:cover;border-radius:8px">' : '<span style="width:40px;height:40px;border-radius:8px;background:#eee;display:inline-flex;align-items:center;justify-content:center">📷</span>')(c.noImg ? '' : imgUrl(c) || imgUrl((M.items || []).find((i) => i.id === c.id))) + '<b style="flex:1;min-width:110px">' + (open ? '▾ ' : '▸ ') + esc(c.name) + '</b><span>' + (c.price == null ? 'TBC' : money(c.price)) + '</span>' + tag(c) + '</button>' + onSwitch(c);
       if (open) {
         const rules = rDraft || (r ? r.rules.map((x) => ({ ...x })) : []);
         rDraft = rules;
@@ -176,6 +188,12 @@
       il.map((i) => { const used = Object.entries(recs).filter(([, r]) => (r.rules || []).some((x) => x.ing === i.id)).length;
         return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid #eee"><span style="flex:1;min-width:140px">' + esc(i.name) + '</span><span class="small">' + esc(i.stock) + ' ' + esc(i.unit) + '</span><span class="small muted">' + used + ' recipe(s)</span><button class="btn sm" data-iedit="' + esc(i.id) + '" type="button">Edit</button><button class="btn sm" data-idel="' + esc(i.id) + '" data-iname="' + esc(i.name) + '" data-iused="' + used + '" type="button">Delete</button></div>'; }).join('') +
       ((D.deletedIngredients || []).length ? '<p class="small"><b>Deleted:</b> ' + D.deletedIngredients.map((i) => esc(i.name) + ' <button class="btn sm" data-ires="' + esc(i.id) + '" type="button">Undo</button>').join(' · ') + '</p>' : '') + '</details>';
+    const cl = (D.categories || []);
+    h += '<details id="catBox"' + (cOpen ? ' open' : '') + ' style="margin-top:10px"><summary><b>Categories (' + cl.filter((c) => !c.deleted).length + ')</b></summary>' +
+      '<p class="muted small">Categories with no products switched on are hidden on the website. Delete works only when no product uses the category.</p>' +
+      '<div class="acts"><button class="btn primary" id="cAdd" type="button">+ Add category</button></div>' +
+      cl.filter((c) => !c.deleted).map((c) => '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid #eee"><span style="flex:1;min-width:140px">' + esc(c.title) + '</span><span class="small muted">' + (c.count || 0) + ' product(s)</span><button class="btn sm" data-cren="' + esc(c.id) + '" type="button">Rename</button><button class="btn sm" data-cdel="' + esc(c.id) + '" data-ccount="' + (c.count || 0) + '" type="button">Delete</button></div>').join('') +
+      (cl.some((c) => c.deleted) ? '<p class="small"><b>Deleted:</b> ' + cl.filter((c) => c.deleted).map((c) => esc(c.title) + ' <button class="btn sm" data-cres="' + esc(c.id) + '" type="button">Undo</button>').join(' · ') + '</p>' : '') + '</details>';
     $('view').innerHTML = h;
   }
   const readDraft = () => [...document.querySelectorAll('[data-rr]')].map((el) => ({ ...(rDraft[+el.dataset.rr] || {}), ing: el.querySelector('[data-ring]').value, qty: el.querySelector('[data-rqty]').value }));
@@ -185,11 +203,12 @@
     if (t.id === 'rSearch') { rQ = t.value; rOpen = ''; rDraft = null; renderRecipes(); const n = $('rSearch'); n.focus(); n.setSelectionRange(pos, pos); }
     if (t.id === 'iSearch') { iQ = t.value; iOpen = true; renderRecipes(); const n = $('iSearch'); n.focus(); n.setSelectionRange(pos, pos); }
   });
-  $('view').addEventListener('change', (e) => { if (tab === 'recipes' && e.target.id === 'rCat') { rCat = e.target.value; rOpen = ''; rDraft = null; renderRecipes(); } });
+  $('view').addEventListener('change', (e) => { if (tab === 'recipes' && e.target.id === 'rCat') { rCat = e.target.value; rOpen = ''; rDraft = null; renderRecipes(); } if (tab === 'recipes' && e.target.id === 'rOn') { rOn = e.target.value; rOpen = ''; renderRecipes(); } });
   $('view').addEventListener('toggle', (e) => { if (e.target.id === 'ingBox') iOpen = e.target.open; }, true);
   $('view').addEventListener('click', async (e) => {
     if (tab !== 'recipes') return;
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.ptog) return toggleOn(b.dataset.ptog, b.dataset.pon !== '1', () => (tab === 'recipes' ? renderRecipes() : renderMenu()));
     if (b.dataset.ropen) { rOpen = rOpen === b.dataset.ropen ? '' : b.dataset.ropen; rDraft = null; return renderRecipes(); }
     if (b.id === 'rAddIng') { rDraft = readDraft(); rDraft.push({ ing: '', qty: null }); return renderRecipes(); }
     if (b.dataset.rrm != null) { rDraft = readDraft(); rDraft.splice(+b.dataset.rrm, 1); return renderRecipes(); }
@@ -201,7 +220,7 @@
     }
   });
   async function adminOp(admin, okMsg, reRender) {
-    try { const j = await api('status', { admin }); toast(okMsg); D = await api('sync'); reRender(); return j; } catch (err) { toast(err.message); return null; }
+    try { const j = await api('status', { admin }); toast(okMsg); D = await api('sync'); useCats(); reRender(); return j; } catch (err) { toast(err.message); return null; }
   }
   function ingEditSheet(id) {
     const i = (D.ingredients || []).find((x) => x.id === id); if (!i) return;
@@ -225,8 +244,9 @@
   }
   function productSheet() {
     const secs = M.sections || [];
-    openSheet('<h3>Add product</h3><p class="muted small">Shows on the till (Walk-in) and for the phone bot. The public website menu is a separate file. Leave the price blank if it is not set yet. New products start OFF until you switch them on.</p><div class="field"><label>Name *</label><input id="pName" maxlength="80"></div><div class="field"><label>Price (G$)</label><input id="pPrice" inputmode="numeric"></div><div class="field"><label>Category</label><select id="pCat">' + secs.map((x) => '<option value="' + esc(x.id) + '">' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div><label class="small"><input type="checkbox" id="pOn"> Available now</label><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="pSave" type="button">Add</button></div>');
-    $('pSave').onclick = async () => { const j = await adminOp({ op: 'product-add', name: $('pName').value, price: $('pPrice').value, category: $('pCat').value, available: $('pOn').checked }, 'Product added', renderMenu); if (j) closeSheet(); };
+    const st = {}; openSheet('<h3>Add product</h3><p class="muted small">Shows on the till (Walk-in), the phone bot and the website. Leave the price blank if it is not set yet. New products start OFF until you switch them on.</p><div class="field"><label>Name *</label><input id="pName" maxlength="80"></div>' + photoField(st) + '<div class="field"><label>Price (G$)</label><input id="pPrice" inputmode="numeric"></div><div class="field"><label>Category</label><select id="pCat">' + secs.map((x) => '<option value="' + esc(x.id) + '">' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div><label class="small"><input type="checkbox" id="pOn"> Available now</label><div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="pSave" type="button">Add</button></div>');
+    wirePhoto(st);
+    $('pSave').onclick = async () => { const j = await adminOp({ op: 'product-add', name: $('pName').value, price: $('pPrice').value, category: $('pCat').value, available: $('pOn').checked, imageId: st.imageId || '' }, 'Product added', renderMenu); if (j) closeSheet(); };
   }
   function recipeSheet(id) {
     const c = rows().find((x) => x.id === id); if (!c) return;
@@ -244,6 +264,36 @@
     draw();
   }
   // "Create recipe + product" / "Make product from this recipe": one form, product is created linked to the recipe, switched OFF.
+  // Product photo control (12 Oct 2026): big Add photo button (phone: camera or gallery), or paste a picture link; preview at once.
+  const imgUrl = (c) => !c || !c.img || c.noImg ? '' : (/^https:\/\//.test(c.img) ? c.img : /^m[a-z0-9]{4,20}$/.test(c.img) ? 'https://unruly.neuereatec.org/menu-img/' + c.img + '.jpg' : '../../images/' + c.img);
+  // On/off switch (12 Oct 2026): green "On, showing" / grey "Off, hidden". Off hides it from the website and the till; nothing is deleted.
+  const onSwitch = (c, big) => '<button type="button" data-ptog="' + esc(c.id) + '" data-pon="' + (c.available === false ? '0' : '1') + '" aria-pressed="' + (c.available !== false) + '" style="border:0;border-radius:999px;padding:' + (big ? '10px 16px' : '6px 12px') + ';margin-top:6px;font-weight:700;cursor:pointer;color:#fff;background:' + (c.available === false ? '#8a8a8a' : '#1d8a3a') + '">' + (c.available === false ? '○ Off, hidden' : '● On, showing') + '</button>';
+  async function toggleOn(id, on, after) {
+    try { await api('status', { admin: { op: 'menu', id, available: on } }); D = await api('sync'); useCats(); toast(on ? 'On: showing on the website and the till' : 'Off: hidden from the website and the till (not deleted)'); after(); }
+    catch (err) { toast(err.message); }
+  }
+  function photoField(st) {
+    return '<div class="field" style="border:2px dashed #e0b400;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+      '<label for="phFile" style="cursor:pointer;display:block"><img id="phPrev" alt="Product photo" src="' + esc(st.preview || '') + '" style="width:96px;height:96px;object-fit:cover;border-radius:10px;background:#eee;' + (st.preview ? '' : 'display:none') + '">' +
+      '<span id="phEmpty" style="width:96px;height:96px;border-radius:10px;background:#f3f3f3;' + (st.preview ? 'display:none' : 'display:flex') + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:.8em">📷<br>Tap to add a photo</span></label>' +
+      '<div style="flex:1;min-width:180px"><label class="btn primary" for="phFile" style="display:block;text-align:center;font-size:1.1em;padding:12px">📷 ' + (st.preview ? 'Replace photo' : 'Add photo') + '</label>' +
+      '<input id="phFile" type="file" accept="image/*" style="display:none">' +
+      '<div style="display:flex;gap:6px;margin-top:6px"><input id="phUrl" type="url" placeholder="or paste image URL (https://…)" style="flex:1;min-width:0"><button class="btn sm" id="phUrlGo" type="button">Use link</button></div>' +
+      '<div class="small muted" id="phMsg">' + (st.preview ? 'Photo ready. It shows on the website after you save.' : 'Optional. Camera or gallery on a phone.') + '</div>' +
+      (st.preview ? '<button class="btn sm" id="phDel" type="button" style="margin-top:4px">Remove photo</button>' : '') + '</div></div>';
+  }
+  function shrinkPhoto(file) {   // phone photos are often 3-8 MB: shrink to 1280 px JPEG before upload
+    return new Promise((res, rej) => { const u = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { const k = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob((b) => b ? res(b) : rej(new Error('Could not read that photo.')), 'image/jpeg', 0.85); };
+      im.onerror = () => { URL.revokeObjectURL(u); file.size <= 1.5 * 1024 * 1024 ? res(file) : rej(new Error('Could not read that photo. Try a JPG.')); }; im.src = u; });
+  }
+  function wirePhoto(st) {
+    const done = (j) => { st.imageId = j.imageId; st.preview = j.preview; st.removed = false; const p = $('phPrev'); p.src = j.preview; p.style.display = ''; $('phEmpty').style.display = 'none'; $('phMsg').textContent = 'Photo ready. It shows on the website after you save.'; toast('Photo added'); };
+    $('phFile').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; $('phMsg').textContent = 'Uploading…'; try { done(await uploadMenuImage(await shrinkPhoto(f))); } catch (err) { $('phMsg').textContent = err.message; toast(err.message); } };
+    $('phUrlGo').onclick = async () => { const u = $('phUrl').value.trim(); if (!u) return toast('Paste a picture link first.'); $('phMsg').textContent = 'Downloading…'; try { done(await api('status', { image: { op: 'from-url', url: u } })); } catch (err) { $('phMsg').textContent = err.message; toast(err.message); } };
+    if ($('phDel')) $('phDel').onclick = () => { st.imageId = ''; st.preview = ''; st.removed = true; $('phPrev').style.display = 'none'; $('phEmpty').style.display = 'flex'; $('phMsg').textContent = 'Photo will be removed from the website when you save.'; };
+  }
   async function uploadMenuImage(file) {
     if (file.size > 1.5 * 1024 * 1024) throw new Error('Image is over 1.5 MB.');
     const buf = new Uint8Array(await file.arrayBuffer());
@@ -258,7 +308,7 @@
   function recipeProductSheet(fromId) {
     const ings = D.ingredients || [], secs = M.sections || [];
     const cur = fromId && (D.recipes || {})[fromId] ? D.recipes[fromId].rules.map((r) => ({ ...r })) : [];
-    let imageId = '', preview = '';
+    const ph = {};
     const keep = {};
     const row = (r, k) => '<div class="field" data-rrow="' + k + '"><select data-ring><option value="">Choose ingredient…</option>' + ings.map((i) => '<option value="' + esc(i.id) + '"' + (r.ing === i.id ? ' selected' : '') + '>' + esc(i.name) + ' (' + esc(i.unit) + ')</option>').join('') + '</select> <input data-rqty inputmode="decimal" placeholder="qty per serving" value="' + (r.qty == null ? '' : esc(r.qty)) + '" style="width:9em"> <button class="btn sm" data-rrm type="button">✕</button></div>';
     const read = () => [...document.querySelectorAll('[data-rrow]')].map((el) => ({ ing: el.querySelector('[data-ring]').value, qty: el.querySelector('[data-rqty]').value }));
@@ -266,22 +316,21 @@
     const draw = () => {
       const from = fromId ? (rows().find((c) => c.id === fromId) || {}).name : '';
       openSheet('<h3>' + (from ? 'Make a product from the ' + esc(from) + ' recipe' : 'Create recipe + product') + '</h3><p class="muted small">The new product is linked to this recipe (selling it takes these ingredients off stock). It starts <b>OFF</b>: switch it on in Menu &amp; Prices when ready, then it shows on the till and the website. Leave price blank if not set.</p>' +
-        '<div class="field"><label>Product name *</label><input id="rpName" maxlength="80" value="' + esc(keep.rpName || '') + '"></div>' +
+        '<div class="field"><label>Product name *</label><input id="rpName" maxlength="80" value="' + esc(keep.rpName || '') + '"></div>' + photoField(ph) +
         '<div class="field"><label>Price (G$)</label><input id="rpPrice" inputmode="numeric" value="' + esc(keep.rpPrice || '') + '"></div>' +
         '<div class="field"><label>Category</label><select id="rpCat">' + secs.map((x) => '<option value="' + esc(x.id) + '"' + (keep.rpCat === x.id ? ' selected' : '') + '>' + esc(x.title || x.name || x.id) + '</option>').join('') + '</select></div>' +
         '<div class="field"><label>Description (shown on the website)</label><textarea id="rpDesc" maxlength="300" rows="2">' + esc(keep.rpDesc || '') + '</textarea></div>' +
-        '<div class="field"><label>Photo (optional, JPG/PNG/WEBP under 1.5 MB)</label><input id="rpImg" type="file" accept="image/jpeg,image/png,image/webp">' + (preview ? '<img src="' + preview + '" alt="" style="max-width:160px;display:block;margin-top:6px">' : '') + '</div>' +
         '<h3>Recipe (per one item sold)</h3><p class="muted small">Ready-made item bought from a vendor (ice cream, cookies…)? Leave the recipe empty and use the stock count below instead.</p><div id="rRows">' + cur.map(row).join('') + '</div><button class="btn sm" id="rAddRow" type="button">+ Ingredient</button>' +
         '<div class="field"><label>No recipe: stock count (ready-made items, 1 off per sale). Blank = don\'t track stock.</label><input id="rpStock" inputmode="numeric" value="' + esc(keep.rpStock || '') + '"></div>' +
         '<div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="rpSave" type="button">Create product</button></div>');
       $('rAddRow').onclick = () => { grab(); cur.splice(0, cur.length, ...read(), { ing: '', qty: null }); draw(); };
       $('rRows').onclick = (e) => { const b = e.target.closest('[data-rrm]'); if (!b) return; grab(); const all = read(); all.splice(+b.parentElement.dataset.rrow, 1); cur.splice(0, cur.length, ...all); draw(); };
-      $('rpImg').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; grab(); try { toast('Uploading photo…'); const j = await uploadMenuImage(f); imageId = j.imageId; preview = j.preview; toast('Photo saved'); cur.splice(0, cur.length, ...read()); draw(); } catch (err) { toast(err.message); } };
+      wirePhoto(ph);
       $('rpSave').onclick = async () => {
         const rules = read().filter((r) => r.ing).map((r) => ({ ing: r.ing, qty: Number(r.qty) }));
         if (rules.length && $('rpStock').value.trim()) return toast('Use either a recipe or a stock count, not both.');
         if (!rules.length && !$('rpStock').value.trim() && !confirm('No recipe and no stock count: sales of this item will not change stock. Continue?')) return;
-        const j = await adminOp({ op: 'product-add', name: $('rpName').value, price: $('rpPrice').value, category: $('rpCat').value, desc: $('rpDesc').value, imageId, rules, resaleStock: rules.length ? '' : $('rpStock').value.trim(), available: false }, 'Product + recipe created (OFF until you switch it on)', renderRecipes);
+        const j = await adminOp({ op: 'product-add', name: $('rpName').value, price: $('rpPrice').value, category: $('rpCat').value, desc: $('rpDesc').value, imageId: ph.imageId || '', rules, resaleStock: rules.length ? '' : $('rpStock').value.trim(), available: false }, 'Product + recipe created (OFF until you switch it on)', renderRecipes);
         if (j) closeSheet();
       };
     };
@@ -299,6 +348,11 @@
   $('view').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'iAdd') return ingSheet();
+    const reC = () => { cOpen = true; renderRecipes(); };
+    if (b.id === 'cAdd') { const t = (prompt('New category name') || '').trim(); if (t) await adminOp({ op: 'cat-add', title: t }, 'Category added', reC); return; }
+    if (b.dataset.cren) { const c = D.categories.find((x) => x.id === b.dataset.cren); const t = (prompt('Rename category', c ? c.title : '') || '').trim(); if (t) await adminOp({ op: 'cat-rename', id: b.dataset.cren, title: t }, 'Category renamed', reC); return; }
+    if (b.dataset.cdel) { if (+b.dataset.ccount) return toast('Move its ' + b.dataset.ccount + ' product(s) to another category first.'); if (confirm('Delete this category? You can undo it.')) await adminOp({ op: 'cat-delete', id: b.dataset.cdel }, 'Category deleted', reC); return; }
+    if (b.dataset.cres) { await adminOp({ op: 'cat-restore', id: b.dataset.cres }, 'Category restored', reC); return; }
     if (b.dataset.iedit) return ingEditSheet(b.dataset.iedit);
     if (b.id === 'rpNew') return recipeProductSheet(null);
     if (b.dataset.rprod) return recipeProductSheet(b.dataset.rprod);
@@ -511,11 +565,14 @@
     const rec = (D.recipes || {})[id];
     const ingName = (i) => { const x = (D.ingredients || []).find((g) => g.id === i); return x ? x.name : i; };
     const recipe = rec && rec.rules ? '<h3>Costing / recipe</h3>' + rec.rules.map((r, k) => '<div class="field"><label>' + esc(ingName(r.ing)) + (r.match ? ' if ' + esc(r.match) : '') + '</label><input data-rq="' + k + '" type="number" step="0.001" value="' + esc(r.qty) + '"></div>').join('') : '';
-    openSheet('<h3>Edit ' + esc(c.name) + '</h3><div class="field"><label>Name</label><input id="mName" maxlength="80" value="' + esc(c.name) + '"></div><div class="field"><label>Price (G$, blank = to confirm)</label><input id="mPrice" inputmode="numeric" value="' + (c.price == null ? '' : esc(c.price)) + '"></div><div class="field"><label>Category</label><select id="mCat">' + secs.map((s) => '<option value="' + esc(s.id) + '"' + (s.id === c.category ? ' selected' : '') + '>' + esc(s.title || s.name || s.id) + '</option>').join('') + '</select></div><label class="small"><input type="checkbox" id="mOn"' + (c.available === false ? '' : ' checked') + '> Available</label>' + recipe + '<div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="mSave" type="button">Save</button></div>');
+    const base = (M.items || []).find((i) => i.id === id); const st = { preview: c.noImg ? '' : (imgUrl(c) || imgUrl(base)) }; openSheet('<h3>Edit ' + esc(c.name) + '</h3>' + photoField(st) + '<div class="field"><label>Name</label><input id="mName" maxlength="80" value="' + esc(c.name) + '"></div><div class="field"><label>Price (G$, blank = to confirm)</label><input id="mPrice" inputmode="numeric" value="' + (c.price == null ? '' : esc(c.price)) + '"></div><div class="field"><label>Category</label><select id="mCat">' + secs.map((s) => '<option value="' + esc(s.id) + '"' + (s.id === c.category ? ' selected' : '') + '>' + esc(s.title || s.name || s.id) + '</option>').join('') + '</select></div><div class="field"><label>Showing to customers</label><div id="mOnBox">' + onSwitch(c, true) + '</div><input type="checkbox" id="mOn" hidden' + (c.available === false ? '' : ' checked') + '></div>' + recipe + '<div class="acts"><button class="btn" data-close type="button">Cancel</button><button class="btn primary" id="mSave" type="button">Save</button></div>');
+    wirePhoto(st);
+    $('mOnBox').onclick = (e) => { const t = e.target.closest('[data-ptog]'); if (!t) return; e.stopPropagation(); const on = t.dataset.pon !== '1';
+      toggleOn(id, on, () => { $('mOn').checked = on; const cc = rows().find((x) => x.id === id) || { id, available: on }; $('mOnBox').innerHTML = onSwitch(cc, true); tab === 'recipes' ? renderRecipes() : renderMenu(); }); };
     $('mSave').onclick = async () => {
       const recipeRules = rec && rec.rules ? rec.rules.map((r, k) => ({ ...r, qty: Number($('sheetPanel').querySelector('[data-rq="' + k + '"]').value) })) : undefined;
       try {
-        await api('status', { admin: { op: 'menu', id, name: $('mName').value, price: $('mPrice').value, category: $('mCat').value, available: $('mOn').checked, recipe: recipeRules } });
+        await api('status', { admin: { op: 'menu', id, name: $('mName').value, price: $('mPrice').value, category: $('mCat').value, available: $('mOn').checked, recipe: recipeRules, ...(st.imageId ? { imageId: st.imageId } : st.removed ? { imageId: 'none' } : {}) } });
         closeSheet(); toast('Menu saved'); D = await api('sync'); tab === 'recipes' ? renderRecipes() : renderMenu();
       } catch (err) { toast(err.message); }
     };

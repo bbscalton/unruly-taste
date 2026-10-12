@@ -337,7 +337,7 @@
         .then(function (x) {
           btn.disabled = false; btn.textContent = 'Buy · place order';
           if (!x.r.ok || !x.j.ok) { err.innerHTML = esc(x.j.error || 'We could not place your order right now.') + (x.j.outOfStock ? '' : ' <a href="' + esc(built.link) + '" target="_blank" rel="noopener">Send it on WhatsApp instead</a>'); return; }
-          var d = { placed: true, no: x.j.no, receipt: x.j.receipt || built.receipt, link: waLink(C.ORDER_WHATSAPP, 'Hi Unruly Taste, about my order ' + x.j.no), reorder: x.j.reorderUrl || o.reorder, total: x.j.total, payment: x.j.payment, test: x.j.test };
+          var d = { placed: true, no: x.j.no, receipt: x.j.receipt || built.receipt, link: waLink(C.ORDER_WHATSAPP, 'Hi Unruly Taste, about my order ' + x.j.no), reorder: x.j.reorderUrl || o.reorder, total: x.j.total, payment: x.j.payment, test: x.j.test, confirm: x.j.confirm || null };
           try { sessionStorage.setItem('ut_done', JSON.stringify(d)); } catch (y) {}
           cart = []; saveCart(); closeModal('cartModal'); showDone(d);
         })
@@ -361,6 +361,10 @@
     $('doneMsg').innerHTML = d.placed ? 'Your order number is <b>' + esc(d.no) + '</b>. The kitchen has it now. ' + esc(d.payment || 'Pay on pickup') + '. Show this number when you collect.' + (d.test ? ' <b>(TEST order)</b>' : '')
       : 'Your order <b>' + esc(d.no) + '</b> is ready in WhatsApp. <b>Tap Send</b> there to place it.';
     $('doneWa').textContent = d.placed ? 'Questions? Message us on WhatsApp' : 'Open WhatsApp & send order';
+    if (d.placed && d.confirm && d.confirm.link) {   // Confirm on WhatsApp: the customer sends the code; then the receipt comes to that number
+      $('doneWa').href = d.confirm.link; $('doneWa').textContent = '📲 Confirm on WhatsApp to get your receipt';
+      $('doneMsg').innerHTML += '<br><small>Tap the green button and press <b>Send</b> in WhatsApp (code ' + esc(d.confirm.code) + '). We then send your receipt to that WhatsApp number.</small>';
+    }
     $('copyReceipt').onclick = function () { copy(d.receipt, 'Receipt copied'); };
     $('copyReorder').onclick = function () { copy(d.reorder, 'Reorder link copied'); };
     $('saveReceipt').onclick = function () {

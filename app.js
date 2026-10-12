@@ -328,6 +328,22 @@
     var o = { no: orderNo(), when: gyNow().label, name: name, phone: ph, delivery: delivery, addr: addr, landmark: $('cLandmark').value.trim(),
       note: $('cNote').value.trim(), lines: lines, total: cartTotal(), ask: cartHasAsk(lines), reorder: reorderUrl(lines) };
     var built = buildOrder(o);
+    var pay = (document.querySelector('input[name=pay]:checked') || {}).value || 'pay-on-pickup';
+    if (C.ORDER_API) {   // Buy -> order goes straight to the shop's POS (12 Oct 2026). WhatsApp link stays as the fallback.
+      var btn = $('placeBtn'); btn.disabled = true; btn.textContent = 'Placing your order…';
+      fetch(C.ORDER_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        items: lines, name: name, whatsapp: ph.display, fulfilment: delivery ? 'delivery' : 'pickup', address: addr, landmark: o.landmark, note: o.note, payment: pay, site: C.SITE_URL }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
+        .then(function (x) {
+          btn.disabled = false; btn.textContent = 'Buy · place order';
+          if (!x.r.ok || !x.j.ok) { err.innerHTML = esc(x.j.error || 'We could not place your order right now.') + (x.j.outOfStock ? '' : ' <a href="' + esc(built.link) + '" target="_blank" rel="noopener">Send it on WhatsApp instead</a>'); return; }
+          var d = { placed: true, no: x.j.no, receipt: x.j.receipt || built.receipt, link: waLink(C.ORDER_WHATSAPP, 'Hi Unruly Taste, about my order ' + x.j.no), reorder: x.j.reorderUrl || o.reorder, total: x.j.total, payment: x.j.payment, test: x.j.test };
+          try { sessionStorage.setItem('ut_done', JSON.stringify(d)); } catch (y) {}
+          cart = []; saveCart(); closeModal('cartModal'); showDone(d);
+        })
+        .catch(function () { btn.disabled = false; btn.textContent = 'Buy · place order'; err.innerHTML = 'No connection to the shop right now. <a href="' + esc(built.link) + '" target="_blank" rel="noopener">Send it on WhatsApp instead</a>'; });
+      return;
+    }
     var done = { no: o.no, receipt: built.receipt, link: built.link, reorder: o.reorder };
     try { sessionStorage.setItem('ut_done', JSON.stringify(done)); } catch (x) {}
     window.__lastOrder = { order: o, message: built.message, link: built.link };   // for testing
@@ -341,6 +357,10 @@
   function showDone(d) {
     $('shop').classList.add('hidden'); $('done').classList.remove('hidden'); renderCartBar();
     $('doneNo').textContent = d.no; $('doneWa').href = d.link; $('receiptText').textContent = d.receipt;
+    $('doneTitle').textContent = d.placed ? 'Thank you! Your order is placed' : 'Almost done: send it in WhatsApp';
+    $('doneMsg').innerHTML = d.placed ? 'Your order number is <b>' + esc(d.no) + '</b>. The kitchen has it now. ' + esc(d.payment || 'Pay on pickup') + '. Show this number when you collect.' + (d.test ? ' <b>(TEST order)</b>' : '')
+      : 'Your order <b>' + esc(d.no) + '</b> is ready in WhatsApp. <b>Tap Send</b> there to place it.';
+    $('doneWa').textContent = d.placed ? 'Questions? Message us on WhatsApp' : 'Open WhatsApp & send order';
     $('copyReceipt').onclick = function () { copy(d.receipt, 'Receipt copied'); };
     $('copyReorder').onclick = function () { copy(d.reorder, 'Reorder link copied'); };
     $('saveReceipt').onclick = function () {
@@ -382,6 +402,13 @@
   var cust = store('ut_cust');
   if (cust) { $('cName').value = cust.name || ''; $('cPhone').value = cust.phone || '+592 '; }
   renderMenu();
+  // Extra payment methods (e.g. MMG) appear ONLY when the shop server reports them enabled. Today: none, cash only.
+  if (C.ORDER_API) fetch(C.ORDER_API.replace(/\/order$/, '/payment-methods'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    .then(function (r) { return r.json(); }).then(function (j) {
+      (j.methods || []).filter(function (m) { return m.id !== 'pay-on-pickup' && m.id !== 'cash'; }).forEach(function (m) {
+        var l = document.createElement('label'); l.innerHTML = '<input type="radio" name="pay" value="' + esc(m.id) + '"> ' + esc(m.label); $('payBox').appendChild(l);
+      });
+    }).catch(function () {});
 
   var params = new URLSearchParams(location.search);
   if (params.has('reorder')) {

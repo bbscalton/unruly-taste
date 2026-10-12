@@ -105,8 +105,12 @@
         <label for="cNote">Note for the kitchen (optional)</label>
         <input type="text" id="cNote" maxlength="140" placeholder="e.g. extra sauce, no pepper">
         <div class="msgline" id="checkoutErr"></div>
-        <button class="big wa" id="placeBtn" type="submit">Send order on WhatsApp</button>
-        <p class="note">Tapping the button opens WhatsApp with your order filled in. Tap <b>Send</b> in WhatsApp to place it. Pay on pickup/delivery.</p>
+        <h3>Payment</h3>
+        <div class="seg" role="radiogroup" aria-label="Payment" id="payBox">
+          <label><input type="radio" name="pay" value="pay-on-pickup" checked> 💵 Pay on pickup / delivery (cash)</label>
+        </div>
+        <button class="big wa" id="placeBtn" type="submit">Buy · place order</button>
+        <p class="note">Your order goes straight to the Unruly Taste kitchen and you get an order number. Pay when you collect.</p>
       </form>
     </div>
   </div>
@@ -116,8 +120,8 @@
 <section id="done" class="hidden">
   <div class="card done">
     <div class="tick">✓</div>
-    <h2>Almost done: send it in WhatsApp</h2>
-    <p>Your order <b id="doneNo"></b> is ready in WhatsApp. <b>Tap Send</b> there to place it.</p>
+    <h2 id="doneTitle">Thank you! Your order is placed</h2>
+    <p id="doneMsg">Your order number is <b id="doneNo"></b>.</p>
     <a class="big wa" id="doneWa" href="#" target="_blank" rel="noopener">Open WhatsApp &amp; send order</a>
     <h3>Your receipt</h3>
     <pre id="receiptText" class="receipt"></pre>
@@ -127,7 +131,7 @@
       <button type="button" class="sbtn hidden" id="shareReceipt">📤 Share to my WhatsApp</button>
       <button type="button" class="sbtn" id="copyReorder">🔁 Copy reorder link</button>
     </div>
-    <p class="note">Unruly Taste also sends this receipt to your WhatsApp number once they get your order. To order the same again later, open the reorder link in the receipt.</p>
+    <p class="note">Unruly Taste may also send this receipt to your WhatsApp number. To order the same again later, open the reorder link in the receipt.</p>
     <button type="button" class="big ghost" id="newOrder">Start a new order</button>
   </div>
 </section>
@@ -136,9 +140,9 @@
 
 <footer><img class="logo small" src="images/logo.webp" alt="Unruly Taste" width="57" height="44" loading="lazy"><p>5th Street, Alberttown, Georgetown</p></footer>
 
-<script src="config.js"></script>
+<script src="config.js?v=20261012c"></script>
 <script src="menu.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=20261012c"></script>
 <script src="assistant.js"></script>
 </body>
 </html>

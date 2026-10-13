@@ -208,7 +208,6 @@
     if (!dead && (o.status === 'new' || o.status === 'preparing')) acts += '<button class="btn green" data-ready="' + esc(o.no) + '">✅ Ready</button>';
     if (!dead && o.status === 'ready') acts = '<button class="btn primary" data-st="collected" data-no="' + esc(o.no) + '">Collected</button>';
     if (!dead) acts += '<button class="btn" data-edit="' + esc(o.no) + '">Edit</button><button class="btn" data-void="' + esc(o.no) + '">Cancel order</button>';
-    acts += '<button class="btn" data-rcpt="' + esc(o.no) + '">🧾 ' + (printedNos().has(o.no) ? 'Reprint' : 'Print receipt') + '</button>';
     return '<div class="card order"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + (o.changed ? '<span class="tag chg' + (o.changed.kind === 'cancelled' ? ' cxl' : '') + '">' + (o.changed.kind === 'cancelled' ? 'Cancelled' : 'Changed') + '</span>' : '') +
       '<span class="tag ' + o.source + '">' + SRC[o.source] + '</span><span class="tag ' + o.status + '">' + o.status + '</span></div>' +
       '<div class="who">' + who + '<br><span class="muted small">' + time(o.createdAt) + (dayOf(o.createdAt) !== today() ? ' · ' + dayOf(o.createdAt) : '') + (o.botSource ? ' · via ' + (BOT[o.botSource] || o.botSource) : '') + '</span></div>' +
@@ -234,7 +233,6 @@
     if (t.dataset.price) return priceDialog(t.dataset.price, +t.dataset.idx);
     if (t.dataset.edit) return editOrder(t.dataset.edit);
     if (t.dataset.void) return cancelOrder(t.dataset.void);
-    if (t.dataset.rcpt) { const o = D.orders.find(x => x.no === t.dataset.rcpt); if (o) receiptSheet(o); }
   });
   $('tab-orders').addEventListener('click', (e) => { const t = e.target.closest('button[data-st]:not([data-no])'); if (t) { fStat = t.dataset.st; renderOrders(); } });
   async function act(action, body, okMsg) {
@@ -402,25 +400,47 @@
     };
     draw();
   }
+  function overLabel(n) { return n == null ? '–' : (n < 0 ? 'Short ' + money(-n) : (n > 0 ? 'Over ' + money(n) : 'Even')); }
   function renderFloat() {
     const el = $('tab-float');
     if (el.dataset.built && el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
-    const f = D.float || { day: today(), open: null, sales: 0, salesCount: 0, in: 0, out: 0, expected: null, count: null, over: null, moves: [], openBy: '', countBy: '' };
-    const overTxt = f.over == null ? '–' : (f.over < 0 ? 'Short ' + money(-f.over) : (f.over > 0 ? 'Over ' + money(f.over) : 'Even'));
-    let h = '<h2>Float · ' + esc(f.day) + '</h2><p class="muted small">Daily cash balance for the cashier. Opening float, plus today\'s cash sales, plus cash put in, minus cash taken out. Test orders and cancelled orders are left out.</p>';
-    h += '<div class="kpis"><div class="kpi"><b>' + (f.open == null ? 'Not set' : money(f.open)) + '</b><span>Opening float</span></div><div class="kpi"><b>' + money(f.sales || 0) + '</b><span>Cash sales (' + (f.salesCount || 0) + ')</span></div><div class="kpi"><b>' + money(f.in || 0) + '</b><span>Cash in</span></div><div class="kpi"><b>' + money(f.out || 0) + '</b><span>Cash out</span></div><div class="kpi"><b>' + (f.expected == null ? 'Set the float' : money(f.expected)) + '</b><span>Expected in drawer</span></div><div class="kpi"><b>' + (f.count == null ? 'Not counted' : money(f.count)) + '</b><span>Counted</span></div><div class="kpi"><b class="' + (f.over < 0 ? 'neg' : 'pos') + '">' + overTxt + '</b><span>Over / short</span></div></div>';
-    if (f.open != null && f.openBy) h += '<p class="muted small">Opening float set by ' + esc(f.openBy) + (f.openAt ? ' · ' + time(f.openAt) : '') + '.</p>';
-    h += '<div class="card" id="floatOpen"><h3>Opening float</h3><p class="muted small">Cash in the drawer at the start of the day, before any sales.</p><div class="field"><label>Amount (G$)</label><input id="flOpen" type="number" inputmode="numeric" min="0" placeholder="e.g. 10000"></div><button class="btn primary" id="flOpenGo" type="button">Set float</button></div>';
-    h += '<div class="card" id="floatMove"><h3>Cash in or out</h3><p class="muted small">Cash in is extra change put in the drawer. Cash out is a safe drop or a payout. A note is required.</p><div class="field"><label>Amount (G$)</label><input id="flAmt" type="number" inputmode="numeric" min="1" placeholder="Amount"></div><div class="field"><label>Note</label><input id="flNote" maxlength="80" placeholder="Safe drop, extra change…"></div><div class="acts"><button class="btn" id="flIn" type="button">Cash in</button><button class="btn" id="flOut" type="button">Cash out</button></div></div>';
-    h += '<div class="card" id="floatCount"><h3>Count the drawer</h3><p class="muted small">Count the cash at the end of the shift, or whenever you want to check. Over / short is the count minus what the drawer should hold.</p><div class="field"><label>Cash counted (G$)</label><input id="flCount" type="number" inputmode="numeric" min="0" placeholder="Amount in the drawer"></div><button class="btn primary" id="flCountGo" type="button">Save count</button></div>';
-    h += '<h3>Movements</h3>' + ((f.moves || []).length ? '<div class="scroll"><table class="t"><tr><th>Time</th><th>What</th><th class="r">Amount</th><th>Note</th><th>By</th></tr>' + f.moves.map(m => '<tr><td>' + time(m.at) + '</td><td>' + (m.dir === 'out' ? 'Cash out' : 'Cash in') + '</td><td class="r">' + money(m.amount) + '</td><td>' + esc(m.note) + '</td><td>' + esc(m.by || '') + '</td></tr>').join('') + '</table></div>' : '<div class="empty card">No cash in or out yet today.</div>');
+    const f = D.float || { day: today(), shift: false, open: null, sales: 0, salesCount: 0, in: 0, out: 0, expected: null, count: null, over: null, moves: [], openBy: '', shifts: [] };
+    const on = f.shift !== false && f.open != null;
+    let h = '<h2>Float · ' + esc(f.day) + '</h2><p class="muted small">Balance the cashier shift. Start with the cash in the drawer. Cash sales and cash in or out are added as you go. At the end of the shift, count the drawer and tap <b>Balance shift</b>. That saves over or short and closes the shift so the next cashier can start.</p>';
+    h += '<div class="kpis"><div class="kpi"><b>' + (f.open == null ? 'Not started' : money(f.open)) + '</b><span>Opening float</span></div><div class="kpi"><b>' + money(f.sales || 0) + '</b><span>Cash sales (' + (f.salesCount || 0) + ')</span></div><div class="kpi"><b>' + money(f.in || 0) + '</b><span>Cash in</span></div><div class="kpi"><b>' + money(f.out || 0) + '</b><span>Cash out</span></div><div class="kpi"><b>' + (f.expected == null ? 'Start the shift' : money(f.expected)) + '</b><span>Expected in drawer</span></div><div class="kpi"><b class="' + (on ? '' : (f.over < 0 ? 'neg' : 'pos')) + '">' + (on ? 'Open' : overLabel(null)) + '</b><span>' + (on ? 'This shift' : 'Over / short') + '</span></div></div>';
+    if (on && f.openBy) h += '<p class="muted small">Shift started by ' + esc(f.openBy) + (f.openAt ? ' · ' + time(f.openAt) : '') + '. Test orders and cancelled orders are left out.</p>';
+    else h += '<p class="muted small">No shift is open. Count the cash in the drawer, then start the shift.</p>';
+    h += '<div class="card" id="floatOpen"><h3>' + (on ? 'Opening float' : 'Start shift') + '</h3><p class="muted small">' + (on ? 'Cash you started this shift with. Change it only if that number was wrong.' : 'Type the cash in the drawer now. This starts your shift.') + '</p><div class="field"><label>Amount (G$)</label><input id="flOpen" type="number" inputmode="numeric" min="0" placeholder="e.g. 10000"' + (on ? ' value="' + f.open + '"' : '') + '></div><button class="btn primary" id="flOpenGo" type="button">' + (on ? 'Update opening' : 'Start shift') + '</button></div>';
+    if (on) {
+      h += '<div class="card" id="floatMove"><h3>Cash in or out</h3><p class="muted small">Cash in is extra change put in the drawer. Cash out is a safe drop or a payout. A note is required.</p><div class="field"><label>Amount (G$)</label><input id="flAmt" type="number" inputmode="numeric" min="1" placeholder="Amount"></div><div class="field"><label>Note</label><input id="flNote" maxlength="80" placeholder="Safe drop, extra change…"></div><div class="acts"><button class="btn" id="flIn" type="button">Cash in</button><button class="btn" id="flOut" type="button">Cash out</button></div></div>';
+      h += '<div class="card" id="floatCount"><h3>Balance this shift</h3><p class="muted small">Count every note and coin in the drawer. Over / short is that count minus what the drawer should hold. Balancing closes this shift.</p><div class="field"><label>Cash counted (G$)</label><input id="flCount" type="number" inputmode="numeric" min="0" placeholder="Amount in the drawer"></div><p class="small" id="flLive">Expected in the drawer: ' + money(f.expected) + '</p><button class="btn primary" id="flCountGo" type="button">Balance shift</button></div>';
+    }
+    h += '<h3>Movements</h3>' + ((f.moves || []).length ? '<div class="scroll"><table class="t"><tr><th>Time</th><th>What</th><th class="r">Amount</th><th>Note</th><th>By</th></tr>' + f.moves.map(m => '<tr><td>' + time(m.at) + '</td><td>' + (m.dir === 'out' ? 'Cash out' : 'Cash in') + '</td><td class="r">' + money(m.amount) + '</td><td>' + esc(m.note) + '</td><td>' + esc(m.by || '') + '</td></tr>').join('') + '</table></div>' : '<div class="empty card">No cash in or out on this shift.</div>');
+    const done = f.shifts || [];
+    if (done.length) h += '<h3>Shifts balanced today</h3><div class="scroll"><table class="t"><tr><th>Cashier</th><th>Balanced</th><th class="r">Expected</th><th class="r">Counted</th><th class="r">Over / short</th></tr>' + done.map(s => '<tr><td>' + esc(s.by || '') + '</td><td>' + (s.closedAt ? time(s.closedAt) : '') + (s.closedBy && s.closedBy !== s.by ? '<br><span class="muted small">by ' + esc(s.closedBy) + '</span>' : '') + '</td><td class="r">' + money(s.expected) + '</td><td class="r">' + money(s.count) + '</td><td class="r ' + (s.over < 0 ? 'neg' : 'pos') + '">' + overLabel(s.over) + '</td></tr>').join('') + '</table></div>';
     el.innerHTML = h; el.dataset.built = '1';
   }
+  $('tab-float').addEventListener('input', (e) => {
+    if (e.target.id !== 'flCount' || !D || !D.float || D.float.expected == null) return;
+    const live = $('flLive'); if (!live) return;
+    if (e.target.value === '') { live.textContent = 'Expected in the drawer: ' + money(D.float.expected); return; }
+    const n = Math.round(+e.target.value);
+    if (!Number.isFinite(n)) return;
+    const over = n - D.float.expected;
+    live.textContent = 'Expected ' + money(D.float.expected) + ' · ' + overLabel(over);
+    live.className = 'small ' + (over < 0 ? 'neg' : 'pos');
+  });
   $('tab-float').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b || !D) return;
-    if (b.id === 'flOpenGo') { const n = $('flOpen').value; if (n === '') return toast('Enter the opening float'); return act('float', { op: 'open', amount: +n }, 'Opening float saved'); }
+    if (b.id === 'flOpenGo') { const n = $('flOpen').value; if (n === '') return toast('Enter the opening float'); return act('float', { op: 'open', amount: +n }, D.float && D.float.open != null ? 'Opening float updated' : 'Shift started'); }
     if (b.id === 'flIn' || b.id === 'flOut') { const n = +$('flAmt').value, note = $('flNote').value.trim(); if (!(n > 0)) return toast('Enter the amount'); if (!note) return toast('Add a short note'); return act('float', { op: b.id === 'flIn' ? 'in' : 'out', amount: n, note }, b.id === 'flIn' ? 'Cash in saved' : 'Cash out saved'); }
-    if (b.id === 'flCountGo') { const n = $('flCount').value; if (n === '') return toast('Enter the counted cash'); return act('float', { op: 'count', amount: +n }, 'Drawer count saved'); }
+    if (b.id === 'flCountGo') {
+      const n = $('flCount').value; if (n === '') return toast('Enter the counted cash');
+      const counted = Math.round(+n), expected = D.float && D.float.expected;
+      const over = expected == null ? null : counted - expected;
+      if (!confirm('Balance this shift?\nCounted ' + money(counted) + (expected == null ? '' : '\nExpected ' + money(expected) + '\n' + overLabel(over)) + '\n\nThis closes the shift.')) return;
+      return act('float', { op: 'balance', amount: counted }, 'Shift balanced');
+    }
   });
 
   // ---------- STOCK ----------

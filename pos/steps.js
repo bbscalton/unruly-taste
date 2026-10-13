@@ -24,8 +24,7 @@
       S('#tab-orders .order [data-st][data-no], #tab-orders .order [data-ready]', 'Move the order along', 'Start preparing, then Ready when the food is done, then Collected when the customer takes it.'),
       S('#tab-orders .order [data-edit]', 'Change the order', 'Tap Edit to add an item, remove a line, or change how many. Then tap Save order.'),
       S('#tab-orders .order [data-void]', 'Cancel the order', 'Tap Cancel order if the sale should not have been rung. Stock goes back and it drops out of today\'s cash. You will be asked to confirm.'),
-      S('#tab-orders .order [data-rcpt]', 'Receipt', 'Tap to see, print or save the receipt for this order. After Collected the receipt opens: print it, or send it on WhatsApp.'),
-      S('#pqBtn', 'Print queue', 'Receipts waiting to print are listed here.'),
+      S('#pqBtn', 'Print queue', 'Receipts are not on the order card. They open after a walk-in sale and after Collected. Waiting receipts are listed here.'),
       S('#bell', 'Low stock bell', 'A number here means something is running low. Tap it to see what.'),
       S('#adminBtn', 'Admin (owner, admin or manager)', 'Opens the owner side. It asks for an owner, admin or manager PIN.'),
       S('#signOutBtn', 'Sign out', 'Tap when you finish your shift so nobody else uses your login.'),
@@ -49,11 +48,11 @@
       TABS
     ],
     float: [
-      S('#tab-float .kpis', "Today's drawer", 'Opening cash, cash sales, money in, money out, and what should be in the drawer.'),
-      S('#floatOpen', 'Opening float', 'Type the cash you started the day with, then tap Set float.'),
-      S('#flOpenGo', 'Save the float', 'Tap to save that opening amount.'),
+      S('#tab-float .kpis', "Today's drawer", 'Opening cash, cash sales, money in, money out, and what should be in the drawer for this shift.'),
+      S('#floatOpen', 'Opening float', 'Type the cash in the drawer and tap Start shift. If the shift is already open, this only corrects the opening amount.'),
+      S('#flOpenGo', 'Save the float', 'Tap to start the shift, or to save a corrected opening amount.'),
       S('#floatMove', 'Cash in or out', 'Use Cash in for extra change. Use Cash out for a safe drop or a payout, and type a note.'),
-      S('#floatCount', 'Count the drawer', 'Type the cash you counted. Over or short is that count minus what the drawer should hold.'),
+      S('#floatCount', 'Balance the shift', 'Count the drawer at the end of your shift. Over or short is that count minus what the drawer should hold. Balancing closes the shift.'),
       TABS
     ],
     stock: [

@@ -33,20 +33,21 @@ test('POS: every cashier tab', { skip: !JSDOM }, async () => {
   const w = await load('pos', true); assert.ok(w.document.querySelector('.st-btn'));
   assert.ok(w.document.querySelector('.top-acts .st-head'), 'Steps button in header'); assert.equal(w.document.querySelector('.top-acts .st-head').nextElementSibling.hasAttribute('data-help'), true, 'sits next to Help');
   w.document.querySelector('.st-head').click(); await wait(30); assert.ok(w.document.querySelector('.st-tip'), 'header button opens guide'); w.UTSteps.stop();
-  need(await walk(w), ['Filter the orders', 'An order', 'Move the order along', 'Change the order', 'Cancel the order', 'Receipt', 'Print queue', 'Sign out', 'Switch sections'], 'orders');
+  need(await walk(w), ['Filter the orders', 'An order', 'Move the order along', 'Change the order', 'Cancel the order', 'Print queue', 'Sign out', 'Switch sections'], 'orders');
   await tab(w, 'walkin'); need(await walk(w), ['Tap what the customer wants', 'The ticket', 'Customer name (optional)', 'Cash received', 'Quick amounts', 'Complete the sale'], 'walkin');
-  await tab(w, 'float'); need(await walk(w), ["Today's drawer", 'Opening float', 'Cash in or out', 'Count the drawer'], 'float');
+  await tab(w, 'float'); need(await walk(w), ["Today's drawer", 'Opening float', 'Cash in or out', 'Balance the shift'], 'float');
   await tab(w, 'stock'); need(await walk(w), ['An ingredient', 'Restock', 'Count', 'Who to call'], 'stock');
   await tab(w, 'today'); need(await walk(w), ["Today's numbers", 'By source', 'Items sold'], 'today');
 });
 test('POS: tapping the lit item advances; item box and receipt guides', { skip: !JSDOM }, async () => {
+  posSync.printQueue = [{ id: 'j1', no: 'W-1', kind: 'auto', trigger: 'walk-in', at: new Date().toISOString(), status: 'queued', note: '', width: 80 }]; posSync.printQueued = 1;
   const w = await load('pos', true); await tab(w, 'walkin'); w.document.querySelector('.st-btn').click(); await wait(30);
   assert.equal(w.document.querySelector('.st-title').textContent, 'Tap what the customer wants');
   w.document.querySelector('#tab-walkin .grid .item').click(); await wait(500);
   const t = w.document.querySelector('.st-title').textContent; assert.notEqual(t, 'Tap what the customer wants', 'advanced after tap: ' + t); assert.ok(w.document.querySelector('#sheet:not(.hidden)'), 'item box opened');
   w.UTSteps.stop(); assert.equal(w.UTSteps.context(), 'item'); need(await walk(w), ['Add to ticket'], 'item box');
   w.document.querySelector('#sheetPanel [data-close]').click(); await wait(20);
-  w.document.querySelector('#tabs [data-tab=orders]').click(); await wait(300); w.document.querySelector('[data-rcpt]').click(); await wait(100);
+  w.document.querySelector('#pqBtn').click(); await wait(50); w.document.querySelector('[data-pqv]').click(); await wait(100);
   assert.equal(w.UTSteps.context(), 'receipt'); need(await walk(w), ['The receipt', 'Print'], 'receipt');
 });
 test('POS: focusing the PIN field advances the login guide; Back/Close work', { skip: !JSDOM }, async () => {

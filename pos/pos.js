@@ -202,13 +202,14 @@
       (l.lineTotal == null && o.status !== 'collected' ? '<span class="cp"><button class="btn sm" data-price="' + esc(o.no) + '" data-idx="' + i + '">Set ' + esc(l.name) + ' price</button></span>' : '') + '</div>').join('');
     const who = o.source === 'walk-in' ? (o.name ? esc(o.name) : 'Counter customer') + ' · cash' + (o.cash ? ' ' + money(o.cash.tendered) + ', change ' + money(o.cash.change) : '')
       : esc(o.name || 'Customer') + (o.number ? ' · ' + esc(o.number) : '') + ' · ' + esc(o.fulfilment) + (o.address ? ' · ' + esc(o.address) : '');
-    const dead = !!(o.cancelled || (o.changed && o.changed.kind === 'cancelled'));
+    const dead = !!(o.cancelled || o.voided || (o.changed && o.changed.kind === 'cancelled'));
     let acts = '';
     if (!dead && o.status === 'new') acts = '<button class="btn" data-st="preparing" data-no="' + esc(o.no) + '">Start preparing</button>';
     if (!dead && (o.status === 'new' || o.status === 'preparing')) acts += '<button class="btn green" data-ready="' + esc(o.no) + '">✅ Ready</button>';
     if (!dead && o.status === 'ready') acts = '<button class="btn primary" data-st="collected" data-no="' + esc(o.no) + '">Collected</button>';
     if (!dead) acts += '<button class="btn" data-edit="' + esc(o.no) + '">Edit</button><button class="btn" data-void="' + esc(o.no) + '">Cancel order</button>';
-    return '<div class="card order"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + (o.changed ? '<span class="tag chg' + (o.changed.kind === 'cancelled' ? ' cxl' : '') + '">' + (o.changed.kind === 'cancelled' ? 'Cancelled' : 'Changed') + '</span>' : '') +
+    if (!o.voided) acts += '<button class="btn sm" style="margin-left:auto" title="Void this order" data-voidit="' + esc(o.no) + '">Void</button>';
+    return '<div class="card order' + (o.voided ? ' void" style="opacity:.45;filter:grayscale(1)' : '') + '"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.voided ? '<span class="tag" style="background:#555;color:#fff">VOID</span>' : '') + (o.test ? '<span class="tag test">test</span>' : '') + (o.changed ? '<span class="tag chg' + (o.changed.kind === 'cancelled' ? ' cxl' : '') + '">' + (o.changed.kind === 'cancelled' ? 'Cancelled' : 'Changed') + '</span>' : '') +
       '<span class="tag ' + o.source + '">' + SRC[o.source] + '</span><span class="tag ' + o.status + '">' + o.status + '</span></div>' +
       '<div class="who">' + who + '<br><span class="muted small">' + time(o.createdAt) + (dayOf(o.createdAt) !== today() ? ' · ' + dayOf(o.createdAt) : '') + (o.botSource ? ' · via ' + (BOT[o.botSource] || o.botSource) : '') + '</span></div>' +
       (o.payment ? '<div class="note small">💵 ' + esc(o.payment.method === 'pay-on-pickup' ? 'Pay on ' + (o.fulfilment === 'delivery' ? 'delivery' : 'pickup') + ' (cash)' : o.payment.method) + ' · ' + esc(o.payment.status) + '</div>' : '') +
@@ -219,6 +220,7 @@
       (SEE() ? '<div class="tot muted"><span>Est. cost' + (o.tbc ? ', priced lines' : '') + '</span><span>' + money(o.cost) + '</span></div>' +
       '<div class="tot"><span>Est. profit</span><span>' + pm(o.profit) + ' <span class="muted small">' + pct(o.profit, o.total) + '</span></span></div>' : '') +
       (o.changed && o.changed.by ? '<div class="muted small">' + (dead ? 'Cancelled' : 'Changed') + ' by ' + esc(o.changed.by) + (o.changed.at ? ' · ' + time(o.changed.at) : '') + '</div>' : '') +
+      (o.voided ? '<div class="muted small">VOID by ' + esc(o.voidedBy || '') + (o.voidedAt ? ' at ' + time(o.voidedAt) : '') + '</div>' : '') +
       (o.ready ? '<div class="note blue small">Ready at ' + time(o.ready.at) + ': ' + esc(o.ready.result) + '</div>' : '') +
       (o.kitchen ? '<div class="note small">👩‍🍳 Kitchen: <b>' + (o.kitchen.status === 'done' ? 'Done' : 'In progress') + '</b> · ' + time(o.kitchen.at) + (o.kitchenReadyMsg ? ' · ready message: ' + esc(o.kitchenReadyMsg.result) : '') + '</div>' : '') +
       ((o.waReceipts || []).length ? '<div class="note small">📱 WhatsApp receipt: ' + o.waReceipts.map(w => esc(w.to) + ' ' + (w.ok ? (w.test ? 'sent (TEST MODE, own chat)' : 'sent') : 'failed: ' + esc(w.error))).join('; ') + '</div>' : '') +
@@ -233,6 +235,7 @@
     if (t.dataset.price) return priceDialog(t.dataset.price, +t.dataset.idx);
     if (t.dataset.edit) return editOrder(t.dataset.edit);
     if (t.dataset.void) return cancelOrder(t.dataset.void);
+    if (t.dataset.voidit) return voidOrder(t.dataset.voidit);
   });
   $('tab-orders').addEventListener('click', (e) => { const t = e.target.closest('button[data-st]:not([data-no])'); if (t) { fStat = t.dataset.st; renderOrders(); } });
   async function act(action, body, okMsg) {
@@ -357,6 +360,12 @@
     draw();
   }
 
+  function voidOrder(no) {   // 13 Oct 2026: VOID = kept on screen, greyed, never counted; stock put back once
+    const o = D.orders.find(x => x.no === no); if (!o || o.voided) return;
+    openSheet('<h3>Void ' + esc(no) + '?</h3><p>' + esc(o.name || 'This order') + ' \u00b7 ' + money(o.total) + '</p><p class="muted small">It stays on the list, greyed and marked VOID, and is left out of sales and counts. Any stock it used is put back.</p>' +
+      '<div class="acts"><button class="btn" data-close>Keep it</button><button class="btn red" id="doVoid">Void</button></div>');
+    $('doVoid').onclick = async () => { $('doVoid').disabled = true; const j = await act('order', { op: 'void', no }, 'Order ' + no + ' void'); if (j) closeSheet(); else $('doVoid').disabled = false; };
+  }
   function cancelOrder(no) {
     const o = D.orders.find(x => x.no === no); if (!o) return;
     openSheet('<h3>Cancel ' + esc(no) + '?</h3><p>' + esc(o.name || 'This order') + ' · ' + money(o.total) + '</p>' +

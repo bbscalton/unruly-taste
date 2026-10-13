@@ -137,6 +137,7 @@
     processPrintQueue();
     if (tab === 'orders') renderOrders();
     else if (tab === 'walkin') renderWalkin();
+    else if (tab === 'float') renderFloat();
     else if (tab === 'stock') renderStock();
     else if (tab === 'today') renderToday();
   }
@@ -201,10 +202,12 @@
       (l.lineTotal == null && o.status !== 'collected' ? '<span class="cp"><button class="btn sm" data-price="' + esc(o.no) + '" data-idx="' + i + '">Set ' + esc(l.name) + ' price</button></span>' : '') + '</div>').join('');
     const who = o.source === 'walk-in' ? (o.name ? esc(o.name) : 'Counter customer') + ' · cash' + (o.cash ? ' ' + money(o.cash.tendered) + ', change ' + money(o.cash.change) : '')
       : esc(o.name || 'Customer') + (o.number ? ' · ' + esc(o.number) : '') + ' · ' + esc(o.fulfilment) + (o.address ? ' · ' + esc(o.address) : '');
+    const dead = !!(o.cancelled || (o.changed && o.changed.kind === 'cancelled'));
     let acts = '';
-    if (o.status === 'new') acts = '<button class="btn" data-st="preparing" data-no="' + esc(o.no) + '">Start preparing</button>';
-    if (o.status === 'new' || o.status === 'preparing') acts += '<button class="btn green" data-ready="' + esc(o.no) + '">✅ Ready</button>';
-    if (o.status === 'ready') acts = '<button class="btn primary" data-st="collected" data-no="' + esc(o.no) + '">Collected</button>';
+    if (!dead && o.status === 'new') acts = '<button class="btn" data-st="preparing" data-no="' + esc(o.no) + '">Start preparing</button>';
+    if (!dead && (o.status === 'new' || o.status === 'preparing')) acts += '<button class="btn green" data-ready="' + esc(o.no) + '">✅ Ready</button>';
+    if (!dead && o.status === 'ready') acts = '<button class="btn primary" data-st="collected" data-no="' + esc(o.no) + '">Collected</button>';
+    if (!dead) acts += '<button class="btn" data-edit="' + esc(o.no) + '">Edit</button><button class="btn" data-void="' + esc(o.no) + '">Cancel order</button>';
     acts += '<button class="btn" data-rcpt="' + esc(o.no) + '">🧾 ' + (printedNos().has(o.no) ? 'Reprint' : 'Print receipt') + '</button>';
     return '<div class="card order"><div class="oh"><span class="ono">' + esc(o.no) + '</span>' + (o.test ? '<span class="tag test">test</span>' : '') + (o.changed ? '<span class="tag chg' + (o.changed.kind === 'cancelled' ? ' cxl' : '') + '">' + (o.changed.kind === 'cancelled' ? 'Cancelled' : 'Changed') + '</span>' : '') +
       '<span class="tag ' + o.source + '">' + SRC[o.source] + '</span><span class="tag ' + o.status + '">' + o.status + '</span></div>' +
@@ -216,6 +219,7 @@
       '<div class="tot big"><span>Total</span><span>' + money(o.total) + (o.tbc ? ' + TBC' : '') + '</span></div>' +
       (SEE() ? '<div class="tot muted"><span>Est. cost' + (o.tbc ? ', priced lines' : '') + '</span><span>' + money(o.cost) + '</span></div>' +
       '<div class="tot"><span>Est. profit</span><span>' + pm(o.profit) + ' <span class="muted small">' + pct(o.profit, o.total) + '</span></span></div>' : '') +
+      (o.changed && o.changed.by ? '<div class="muted small">' + (dead ? 'Cancelled' : 'Changed') + ' by ' + esc(o.changed.by) + (o.changed.at ? ' · ' + time(o.changed.at) : '') + '</div>' : '') +
       (o.ready ? '<div class="note blue small">Ready at ' + time(o.ready.at) + ': ' + esc(o.ready.result) + '</div>' : '') +
       (o.kitchen ? '<div class="note small">👩‍🍳 Kitchen: <b>' + (o.kitchen.status === 'done' ? 'Done' : 'In progress') + '</b> · ' + time(o.kitchen.at) + (o.kitchenReadyMsg ? ' · ready message: ' + esc(o.kitchenReadyMsg.result) : '') + '</div>' : '') +
       ((o.waReceipts || []).length ? '<div class="note small">📱 WhatsApp receipt: ' + o.waReceipts.map(w => esc(w.to) + ' ' + (w.ok ? (w.test ? 'sent (TEST MODE, own chat)' : 'sent') : 'failed: ' + esc(w.error))).join('; ') + '</div>' : '') +
@@ -228,6 +232,8 @@
       if (j && j.order && t.dataset.st === 'collected') receiptSheet(j.order, null, '✅ ' + j.order.no + ' collected · receipt'); return; }
     if (t.dataset.ready) return readyDialog(t.dataset.ready);
     if (t.dataset.price) return priceDialog(t.dataset.price, +t.dataset.idx);
+    if (t.dataset.edit) return editOrder(t.dataset.edit);
+    if (t.dataset.void) return cancelOrder(t.dataset.void);
     if (t.dataset.rcpt) { const o = D.orders.find(x => x.no === t.dataset.rcpt); if (o) receiptSheet(o); }
   });
   $('tab-orders').addEventListener('click', (e) => { const t = e.target.closest('button[data-st]:not([data-no])'); if (t) { fStat = t.dataset.st; renderOrders(); } });
@@ -258,7 +264,11 @@
   // ---------- sheet ----------
   function openSheet(html) { $('sheetPanel').innerHTML = html; $('sheet').classList.remove('hidden'); }
   function closeSheet() { $('sheet').classList.add('hidden'); $('sheetPanel').innerHTML = ''; }
-  $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet' || e.target.closest('[data-close]')) closeSheet(); });
+  let sheetBack = null;
+  $('sheet').addEventListener('click', (e) => {
+    if (e.target.closest('[data-back]')) { const fn = sheetBack; sheetBack = null; if (fn) fn(); return; }
+    if (e.target.id === 'sheet' || e.target.closest('[data-close]')) { sheetBack = null; closeSheet(); }
+  });
 
   // ---------- WALK-IN ----------
   const total = () => ticket.reduce((s, l) => s + (l.unit == null ? 0 : l.unit * l.qty), 0);
@@ -319,7 +329,7 @@
       else b.disabled = false;
     }
   });
-  function itemSheet(it) {
+  function itemSheet(it, onAdd) {
     const ch = it.groups.map(() => -1); let qty = 1, price = '';
     const draw = () => {
       it.groups.forEach((g, i) => { if (!visible(it, g, ch)) ch[i] = -1; });
@@ -329,7 +339,7 @@
       if (it.price == null) h += '<div class="field"><label>Price per box (G$): price to confirm, enter what you charge</label><input id="mp" type="number" inputmode="numeric" min="1" value="' + esc(price) + '" placeholder="e.g. 3000"></div>';
       h += '<div class="field"><label>Quantity</label><div class="qty"><button data-qd="-1">−</button><b>' + qty + '</b><button data-qd="1">+</button></div></div>' +
         '<div class="note small">Line: <b>' + (lt == null ? 'enter price' : money(lt)) + '</b>' + (SEE() ? ' · est. cost ' + money(c) + (lt == null ? '' : ' · est. profit ' + pm(lt - c)) + ' <span class="tag est">estimated cost</span>' : '') + '</div>' +
-        '<div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="addIt">Add to ticket</button></div>';
+        '<div class="acts"><button class="btn" ' + (onAdd ? 'data-back' : 'data-close') + '>Cancel</button><button class="btn primary" id="addIt">' + (onAdd ? 'Add to order' : 'Add to ticket') + '</button></div>';
       openSheet(h);
       const mp = $('mp'); if (mp) mp.oninput = () => { price = mp.value; const s = summary(it, ch), u = +price || null; const n = document.querySelector('#sheetPanel .note'); if (n) n.innerHTML = 'Line: <b>' + (u ? money(u * qty) : 'enter price') + '</b>' + (SEE() ? ' · est. cost ' + money(lineCost(it.id, s, qty).cost) + (u ? ' · est. profit ' + pm(u * qty - lineCost(it.id, s, qty).cost) : '') + ' <span class="tag est">estimated cost</span>' : ''); };
       $('sheetPanel').onclick = (e) => {
@@ -339,13 +349,79 @@
         else if (b.id === 'addIt') {
           const miss = it.groups.find((g, i) => visible(it, g, ch) && ch[i] < 0); if (miss) return toast('Choose: ' + miss.label);
           if (it.price == null && !(+price > 0)) return toast('Enter the price per box');
-          ticket.push({ id: it.id, name: it.name, ch: ch.slice(), choices: summary(it, ch), qty, unit: it.price != null ? it.price : Math.round(+price), manual: it.price == null });
+          const line = { id: it.id, name: it.name, ch: ch.slice(), choices: summary(it, ch), qty, unit: it.price != null ? it.price : Math.round(+price), manual: it.price == null };
+          if (onAdd) { sheetBack = null; onAdd(line); return; }
+          ticket.push(line);
           closeSheet(); renderTicket(); toast('Added ' + qty + '× ' + it.name);
         }
       };
     };
     draw();
   }
+
+  function cancelOrder(no) {
+    const o = D.orders.find(x => x.no === no); if (!o) return;
+    openSheet('<h3>Cancel ' + esc(no) + '?</h3><p>' + esc(o.name || 'This order') + ' · ' + money(o.total) + '</p>' +
+      (o.status === 'collected' ? '<div class="note">This order is already marked collected. Cancelling still takes it out of today\'s cash.</div>' : '') +
+      '<p class="muted small">The items come off this order, stock goes back, and the sale is left out of the float. This cannot be undone.</p>' +
+      '<div class="acts"><button class="btn" data-close>Keep it</button><button class="btn red" id="doCancel">Cancel order</button></div>');
+    $('doCancel').onclick = async () => { $('doCancel').disabled = true; const j = await act('order', { op: 'cancel', no }, 'Order ' + no + ' cancelled'); if (j) closeSheet(); else $('doCancel').disabled = false; };
+  }
+  function editOrder(no) {
+    const o = D.orders.find(x => x.no === no); if (!o || o.cancelled) return;
+    const keep = o.lines.map((l, i) => ({ i, qty: l.qty, name: l.name, choices: l.choices || '', unit: l.lineTotal == null || !l.qty ? null : Math.round(l.lineTotal / l.qty) }));
+    const add = [];
+    let tend = o.cash ? String(o.cash.tendered) : '';
+    const sum = () => keep.reduce((s, l) => s + (l.unit == null ? 0 : l.unit * l.qty), 0) + add.reduce((s, l) => s + (l.unit == null ? 0 : l.unit * l.qty), 0);
+    const draw = () => {
+      sheetBack = null;
+      const tot = sum();
+      let h = '<h3>Edit ' + esc(no) + '</h3><p class="muted small">Change the quantity, remove a line, or add an item. Removing the last item is not allowed: cancel the order instead.</p>';
+      h += keep.map((l, n) => '<div class="tl"><div class="qty"><button type="button" data-kq="' + n + '" data-d="-1">−</button><b>' + l.qty + '</b><button type="button" data-kq="' + n + '" data-d="1">+</button></div><div><b>' + esc(l.name) + '</b>' + (l.choices ? '<div class="muted small">' + esc(l.choices) + '</div>' : '') + '</div><div style="text-align:right"><b>' + (l.unit == null ? 'TBC' : money(l.unit * l.qty)) + '</b><br><button class="x" type="button" data-krm="' + n + '" title="Remove">✕</button></div></div>').join('');
+      h += add.map((l, n) => '<div class="tl"><b>' + l.qty + '×</b><div><b>' + esc(l.name) + '</b>' + (l.choices ? '<div class="muted small">' + esc(l.choices) + '</div>' : '') + ' <span class="tag new">new</span></div><div style="text-align:right"><b>' + money(l.unit * l.qty) + '</b><br><button class="x" type="button" data-arm="' + n + '" title="Remove">✕</button></div></div>').join('');
+      h += '<div class="tot big"><span>Total</span><span>' + money(tot) + '</span></div>';
+      if (o.source === 'walk-in') h += '<div class="field"><label>Cash tendered (G$)</label><input id="editTend" type="number" inputmode="numeric" min="0" value="' + esc(tend) + '"></div><div id="editChg">' + ((+tend || 0) >= tot ? '<div class="change">Change: ' + money((+tend || 0) - tot) + '</div>' : '<div class="change short">Short by ' + money(tot - (+tend || 0)) + '</div>') + '</div>';
+      const opts = M.items.filter(it => it.available !== false).map(it => '<option value="' + esc(it.id) + '">' + esc(it.name) + '</option>').join('');
+      h += '<div class="field"><label>Add an item</label><div class="acts"><select id="editPick" style="width:auto;max-width:70%">' + opts + '</select><button class="btn sm" id="editAdd" type="button">Add</button></div></div>';
+      h += '<div class="acts"><button class="btn" data-close>Close</button><button class="btn primary" id="editSave" type="button">Save order</button></div>';
+      openSheet(h);
+      const te = $('editTend'); if (te) te.oninput = () => { tend = te.value; const box = $('editChg'); const now = sum(); if (box) box.innerHTML = (+tend || 0) >= now ? '<div class="change">Change: ' + money((+tend || 0) - now) + '</div>' : '<div class="change short">Short by ' + money(now - (+tend || 0)) + '</div>'; };
+      $('sheetPanel').onclick = (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.dataset.kq != null) { const l = keep[+b.dataset.kq]; if (l) l.qty = Math.max(1, Math.min(50, l.qty + +b.dataset.d)); return draw(); }
+        if (b.dataset.krm != null) { if (keep.length + add.length < 2) return toast('Cancel the order instead of removing the last item'); keep.splice(+b.dataset.krm, 1); return draw(); }
+        if (b.dataset.arm != null) { add.splice(+b.dataset.arm, 1); return draw(); }
+        if (b.id === 'editAdd') { const it = byId($('editPick').value); if (!it) return; sheetBack = draw; return itemSheet(it, (line) => { add.push(line); draw(); }); }
+        if (b.id === 'editSave') {
+          if (!keep.length && !add.length) return toast('Cancel the order instead');
+          if (o.source === 'walk-in' && (+tend || 0) < tot) return toast('Cash does not cover the new total');
+          b.disabled = true;
+          act('order', { op: 'edit', no, keep: keep.map(l => ({ i: l.i, qty: l.qty })), add: add.map(l => ({ id: l.id, qty: l.qty, ch: l.ch, price: l.manual ? l.unit : undefined })), tendered: o.source === 'walk-in' ? +tend : undefined }, 'Order ' + no + ' updated').then(j => { if (j) closeSheet(); else b.disabled = false; });
+        }
+      };
+    };
+    draw();
+  }
+  function renderFloat() {
+    const el = $('tab-float');
+    if (el.dataset.built && el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+    const f = D.float || { day: today(), open: null, sales: 0, salesCount: 0, in: 0, out: 0, expected: null, count: null, over: null, moves: [], openBy: '', countBy: '' };
+    const overTxt = f.over == null ? '–' : (f.over < 0 ? 'Short ' + money(-f.over) : (f.over > 0 ? 'Over ' + money(f.over) : 'Even'));
+    let h = '<h2>Float · ' + esc(f.day) + '</h2><p class="muted small">Daily cash balance for the cashier. Opening float, plus today\'s cash sales, plus cash put in, minus cash taken out. Test orders and cancelled orders are left out.</p>';
+    h += '<div class="kpis"><div class="kpi"><b>' + (f.open == null ? 'Not set' : money(f.open)) + '</b><span>Opening float</span></div><div class="kpi"><b>' + money(f.sales || 0) + '</b><span>Cash sales (' + (f.salesCount || 0) + ')</span></div><div class="kpi"><b>' + money(f.in || 0) + '</b><span>Cash in</span></div><div class="kpi"><b>' + money(f.out || 0) + '</b><span>Cash out</span></div><div class="kpi"><b>' + (f.expected == null ? 'Set the float' : money(f.expected)) + '</b><span>Expected in drawer</span></div><div class="kpi"><b>' + (f.count == null ? 'Not counted' : money(f.count)) + '</b><span>Counted</span></div><div class="kpi"><b class="' + (f.over < 0 ? 'neg' : 'pos') + '">' + overTxt + '</b><span>Over / short</span></div></div>';
+    if (f.open != null && f.openBy) h += '<p class="muted small">Opening float set by ' + esc(f.openBy) + (f.openAt ? ' · ' + time(f.openAt) : '') + '.</p>';
+    h += '<div class="card" id="floatOpen"><h3>Opening float</h3><p class="muted small">Cash in the drawer at the start of the day, before any sales.</p><div class="field"><label>Amount (G$)</label><input id="flOpen" type="number" inputmode="numeric" min="0" placeholder="e.g. 10000"></div><button class="btn primary" id="flOpenGo" type="button">Set float</button></div>';
+    h += '<div class="card" id="floatMove"><h3>Cash in or out</h3><p class="muted small">Cash in is extra change put in the drawer. Cash out is a safe drop or a payout. A note is required.</p><div class="field"><label>Amount (G$)</label><input id="flAmt" type="number" inputmode="numeric" min="1" placeholder="Amount"></div><div class="field"><label>Note</label><input id="flNote" maxlength="80" placeholder="Safe drop, extra change…"></div><div class="acts"><button class="btn" id="flIn" type="button">Cash in</button><button class="btn" id="flOut" type="button">Cash out</button></div></div>';
+    h += '<div class="card" id="floatCount"><h3>Count the drawer</h3><p class="muted small">Count the cash at the end of the shift, or whenever you want to check. Over / short is the count minus what the drawer should hold.</p><div class="field"><label>Cash counted (G$)</label><input id="flCount" type="number" inputmode="numeric" min="0" placeholder="Amount in the drawer"></div><button class="btn primary" id="flCountGo" type="button">Save count</button></div>';
+    h += '<h3>Movements</h3>' + ((f.moves || []).length ? '<div class="scroll"><table class="t"><tr><th>Time</th><th>What</th><th class="r">Amount</th><th>Note</th><th>By</th></tr>' + f.moves.map(m => '<tr><td>' + time(m.at) + '</td><td>' + (m.dir === 'out' ? 'Cash out' : 'Cash in') + '</td><td class="r">' + money(m.amount) + '</td><td>' + esc(m.note) + '</td><td>' + esc(m.by || '') + '</td></tr>').join('') + '</table></div>' : '<div class="empty card">No cash in or out yet today.</div>');
+    el.innerHTML = h; el.dataset.built = '1';
+  }
+  $('tab-float').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b || !D) return;
+    if (b.id === 'flOpenGo') { const n = $('flOpen').value; if (n === '') return toast('Enter the opening float'); return act('float', { op: 'open', amount: +n }, 'Opening float saved'); }
+    if (b.id === 'flIn' || b.id === 'flOut') { const n = +$('flAmt').value, note = $('flNote').value.trim(); if (!(n > 0)) return toast('Enter the amount'); if (!note) return toast('Add a short note'); return act('float', { op: b.id === 'flIn' ? 'in' : 'out', amount: n, note }, b.id === 'flIn' ? 'Cash in saved' : 'Cash out saved'); }
+    if (b.id === 'flCountGo') { const n = $('flCount').value; if (n === '') return toast('Enter the counted cash'); return act('float', { op: 'count', amount: +n }, 'Drawer count saved'); }
+  });
 
   // ---------- STOCK ----------
   function renderStock() {

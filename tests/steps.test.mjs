@@ -4,7 +4,7 @@ let JSDOM; try { ({ JSDOM } = createRequire(import.meta.url)(process.env.JSDOM_P
 const rd = (p) => fs.readFileSync(p, 'utf8'), wait = (ms) => new Promise((r) => setTimeout(r, ms)); const wins = []; after(() => wins.forEach((w) => w.close()));
 const ing = [{ id: 'i1', name: 'Chicken', unit: 'kg', stock: 2, low: true, min: { kind: 'qty', value: 5 }, threshold: 5, servingsLeft: 8, costPerUnit: 1400, costLabel: 'estimate', vendor: { name: 'V', phone: '5925550100', placeholder: true } }];
 const order = { no: 'W-1', source: 'whatsapp', status: 'new', name: 'Ann', number: '5925550101', fulfilment: 'pickup', createdAt: new Date().toISOString(), total: 3000, cost: 1000, profit: 2000, lines: [{ qty: 1, name: 'Box', lineTotal: 3000, cost: 1000, profit: 2000 }] };
-const posSync = { serverTime: new Date().toISOString(), orders: [order], ingredients: ing, recipes: {}, alerts: [], vendors: [], catalog: [], printQueue: [], printQueued: 0, settings: { readyText: 'x', readyTextDelivery: 'y', printer: {}, pos: {} }, summary: { day: '2026-10-10', sales: 3000, orders: 1, cost: 1000, profit: 2000, tbc: 0, bySource: {}, items: { Box: { qty: 1, sales: 3000, cost: 1000 } } } };
+const posSync = { me: { name: 'Owner', role: 'owner', scope: 'pos' }, serverTime: new Date().toISOString(), orders: [order], ingredients: ing, recipes: {}, alerts: [], vendors: [], catalog: [], printQueue: [], printQueued: 0, settings: { readyText: 'x', readyTextDelivery: 'y', printer: {}, pos: {} }, summary: { day: '2026-10-10', sales: 3000, orders: 1, cost: 1000, profit: 2000, tbc: 0, bySource: {}, items: { Box: { qty: 1, sales: 3000, cost: 1000 } } }, float: { day: '2026-10-12', open: 5000, sales: 3000, salesCount: 1, in: 0, out: 0, expected: 8000, count: null, over: null, moves: [], openBy: 'Owner' } };
 const admSync = { me: { role: 'owner', scope: 'admin', name: 'Owner' }, settings: { shop: { closedWeekdays: [], closedDates: [] }, promo: { tags: [] }, printer: {}, receipt: {}, pos: {} }, promo: { customers: [{ id: 'c1', name: 'Ann', number: '592***', tags: [], opt: 'yes' }], promos: [], optedIn: 1 }, catalog: [], ingredients: ing, vendors: [], recipes: {}, printQueue: [] };
 async function load(kind, signedIn) {
   const adm = kind === 'admin', dom = new JSDOM(rd(adm ? 'pos/admin/index.html' : 'pos/index.html').replace(/<script[^>]*src[^>]*><\/script>/g, ''), { url: 'http://x/unruly-taste/pos/' + (adm ? 'admin/' : ''), runScripts: 'outside-only', pretendToBeVisual: true }), w = dom.window; wins.push(w);
@@ -33,8 +33,9 @@ test('POS: every cashier tab', { skip: !JSDOM }, async () => {
   const w = await load('pos', true); assert.ok(w.document.querySelector('.st-btn'));
   assert.ok(w.document.querySelector('.top-acts .st-head'), 'Steps button in header'); assert.equal(w.document.querySelector('.top-acts .st-head').nextElementSibling.hasAttribute('data-help'), true, 'sits next to Help');
   w.document.querySelector('.st-head').click(); await wait(30); assert.ok(w.document.querySelector('.st-tip'), 'header button opens guide'); w.UTSteps.stop();
-  need(await walk(w), ['Filter the orders', 'An order', 'Move the order along', 'Receipt', 'Print queue', 'Sign out', 'Switch sections'], 'orders');
+  need(await walk(w), ['Filter the orders', 'An order', 'Move the order along', 'Change the order', 'Cancel the order', 'Receipt', 'Print queue', 'Sign out', 'Switch sections'], 'orders');
   await tab(w, 'walkin'); need(await walk(w), ['Tap what the customer wants', 'The ticket', 'Customer name (optional)', 'Cash received', 'Quick amounts', 'Complete the sale'], 'walkin');
+  await tab(w, 'float'); need(await walk(w), ["Today's drawer", 'Opening float', 'Cash in or out', 'Count the drawer'], 'float');
   await tab(w, 'stock'); need(await walk(w), ['An ingredient', 'Restock', 'Count', 'Who to call'], 'stock');
   await tab(w, 'today'); need(await walk(w), ["Today's numbers", 'By source', 'Items sold'], 'today');
 });

@@ -22,6 +22,8 @@
       S('#tab-orders .chips', 'Filter the orders', 'Pick where orders came from (Walk-in, WhatsApp, Web) and whether to show Open or Collected ones.'),
       S('#tab-orders .order, #tab-orders .empty', 'An order', 'Each card is one order: who it is for, what they ordered and the total. WhatsApp and web orders appear by themselves.'),
       S('#tab-orders .order [data-st][data-no], #tab-orders .order [data-ready]', 'Move the order along', 'Start preparing, then Ready when the food is done, then Collected when the customer takes it.'),
+      S('#tab-orders .order [data-edit]', 'Change the order', 'Tap Edit to add an item, remove a line, or change how many. Then tap Save order.'),
+      S('#tab-orders .order [data-void]', 'Cancel the order', 'Tap Cancel order if the sale should not have been rung. Stock goes back and it drops out of today\'s cash. You will be asked to confirm.'),
       S('#tab-orders .order [data-rcpt]', 'Receipt', 'Tap to see, print or save the receipt for this order. After Collected the receipt opens: print it, or send it on WhatsApp.'),
       S('#pqBtn', 'Print queue', 'Receipts waiting to print are listed here.'),
       S('#bell', 'Low stock bell', 'A number here means something is running low. Tap it to see what.'),
@@ -44,6 +46,14 @@
       S('#waNum', 'WhatsApp receipt (optional)', 'If the customer wants the receipt on WhatsApp, type their number (7 digits) and tap Send on WhatsApp. Nothing prints then. Leave it blank to print as usual. If sending fails, it prints instead.'),
       S('#sheetPanel [data-rp=print]', 'Print the receipt', 'Tap Print to print it, or use Save as PDF.'),
       S('#sheetPanel [data-close]', 'Close', 'Tap Close to finish and start the next sale.'),
+      TABS
+    ],
+    float: [
+      S('#tab-float .kpis', "Today's drawer", 'Opening cash, cash sales, money in, money out, and what should be in the drawer.'),
+      S('#floatOpen', 'Opening float', 'Type the cash you started the day with, then tap Set float.'),
+      S('#flOpenGo', 'Save the float', 'Tap to save that opening amount.'),
+      S('#floatMove', 'Cash in or out', 'Use Cash in for extra change. Use Cash out for a safe drop or a payout, and type a note.'),
+      S('#floatCount', 'Count the drawer', 'Type the cash you counted. Over or short is that count minus what the drawer should hold.'),
       TABS
     ],
     stock: [

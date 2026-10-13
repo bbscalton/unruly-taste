@@ -5,7 +5,7 @@ let JSDOM; try { ({ JSDOM } = createRequire(import.meta.url)(process.env.JSDOM_P
 const rd = (p) => fs.readFileSync(p, 'utf8'), wait = (ms) => new Promise((r) => setTimeout(r, ms)); const wins = []; after(() => wins.forEach((w) => w.close()));
 const ing = [{ id: 'i1', name: 'Chicken', unit: 'kg', stock: 2, low: true, min: { kind: 'qty', value: 5 }, threshold: 5, servingsLeft: 8, costPerUnit: 1400, costLabel: 'estimate', vendor: { name: 'V', phone: '5925550100', placeholder: true } }];
 const order = { no: 'W-1', source: 'whatsapp', status: 'new', name: 'Ann', number: '5925550101', fulfilment: 'pickup', createdAt: new Date().toISOString(), total: 3000, cost: 1000, profit: 2000, lines: [{ qty: 1, name: 'Box', lineTotal: 3000, cost: 1000, profit: 2000 }] };
-let ROLE = 'owner'; const posSync = { get me() { return { name: 'T', role: ROLE, scope: 'pos' }; }, serverTime: new Date().toISOString(), orders: [order], ingredients: ing, recipes: {}, alerts: [], vendors: [], catalog: [], printQueue: [], printQueued: 0, settings: { readyText: 'x', readyTextDelivery: 'y', printer: {}, pos: {} }, summary: { day: '2026-10-10', sales: 3000, orders: 1, cost: 1000, profit: 2000, tbc: 0, bySource: { 'walk-in': { orders: 1, sales: 3000, cost: 1000, profit: 2000 } }, items: { Box: { qty: 1, sales: 3000, cost: 1000 } } } };
+let ROLE = 'owner'; const posSync = { get me() { return { name: 'T', role: ROLE, scope: 'pos' }; }, serverTime: new Date().toISOString(), orders: [order], ingredients: ing, recipes: {}, alerts: [], vendors: [], catalog: [], printQueue: [], printQueued: 0, settings: { readyText: 'x', readyTextDelivery: 'y', printer: {}, pos: {} }, summary: { day: '2026-10-10', sales: 3000, orders: 1, cost: 1000, profit: 2000, tbc: 0, bySource: { 'walk-in': { orders: 1, sales: 3000, cost: 1000, profit: 2000 } }, items: { Box: { qty: 1, sales: 3000, cost: 1000 } } }, float: { day: '2026-10-12', open: 5000, sales: 3000, salesCount: 1, in: 0, out: 0, expected: 8000, count: null, over: null, moves: [], openBy: 'T' } };
 const admSync = { me: { role: 'owner', scope: 'admin', name: 'Owner' }, settings: { shop: { closedWeekdays: [], closedDates: [] }, promo: { tags: [] }, printer: {}, receipt: {}, pos: {} }, promo: { customers: [{ id: 'c1', name: 'Ann', number: '592***', tags: [], opt: 'yes' }], promos: [], optedIn: 1 }, catalog: [], ingredients: ing, vendors: [], recipes: {}, printQueue: [] };
 async function load(kind, signedIn) {
   const adm = kind === 'admin', dom = new JSDOM(rd(adm ? 'pos/admin/index.html' : 'pos/index.html').replace(/<script[^>]*src[^>]*><\/script>/g, ''), { url: 'http://x/unruly-taste/pos/' + (adm ? 'admin/' : ''), runScripts: 'outside-only', pretendToBeVisual: true }), w = dom.window; wins.push(w);
@@ -26,13 +26,17 @@ const COSTWORDS = /Est\. cost|Est\. profit|est\. cost|est\. profit|margin|\bprof
 async function views(w) { const out = {}; out.orders = text(w.document.querySelector('#tab-orders'));
   await tab(w, 'walkin'); w.document.querySelector('#tab-walkin .grid .item').click(); await wait(100); out.item = text(w.document.querySelector('#sheetPanel')); w.document.querySelector('#sheetPanel .opt') && w.document.querySelector('#sheetPanel .opt').click();
   w.document.querySelector('#sheetPanel #addIt').click(); await wait(200); out.walkin = text(w.document.querySelector('#tab-walkin')); out.grid = text(w.document.querySelector('#tab-walkin .grid'));
-  await tab(w, 'stock'); out.stock = text(w.document.querySelector('#tab-stock')); await tab(w, 'today'); out.today = text(w.document.querySelector('#tab-today')); return out; }
+  await tab(w, 'float'); out.float = text(w.document.querySelector('#tab-float'));
+  if (!w.document.body.classList.contains('ut-staff')) { await tab(w, 'stock'); out.stock = text(w.document.querySelector('#tab-stock')); await tab(w, 'today'); out.today = text(w.document.querySelector('#tab-today')); }
+  else { out.stock = ''; out.today = ''; }
+  return out; }
 test('staff: no cost or profit anywhere; sales still shown', { skip: !JSDOM }, async () => {
   ROLE = 'staff'; const w = await load('pos', true); const v = await views(w);
   for (const [k, t] of Object.entries(v)) assert.ok(!COSTWORDS.test(t) && !/Costs are not the restaurant/.test(t), k + ' leaks cost/profit: ' + (COSTWORDS.exec(t) || ['note'])[0]);
-  assert.ok(/Sales/.test(v.today) && /G\$3,000/.test(v.today), 'sales kept'); assert.ok(/Total/.test(v.orders) && /G\$3,000/.test(v.orders), 'order total kept'); assert.ok(/Total/.test(v.walkin), 'ticket total kept');
-  assert.ok(!/1,400/.test(v.stock), 'ingredient unit cost hidden'); assert.ok(/Chicken/.test(v.stock) && /servings/.test(v.stock), 'stock levels kept');
-  assert.ok(w.document.body.classList.contains('ut-staff')); assert.ok(!/profit/i.test(w.document.querySelector('#tab-today').textContent));
+  assert.ok(/Cash sales/.test(v.float) && /G\$3,000/.test(v.float) && /G\$5,000/.test(v.float), 'float kept'); assert.ok(/Total/.test(v.orders) && /G\$3,000/.test(v.orders), 'order total kept'); assert.ok(/Total/.test(v.walkin), 'ticket total kept');
+  assert.ok(w.document.querySelector('#tabs [data-tab=stock]').classList.contains('hidden') && w.document.querySelector('#tabs [data-tab=today]').classList.contains('hidden'), 'stock and today hidden');
+  assert.ok(!w.document.querySelector('#tabs [data-tab=float]').classList.contains('hidden'), 'float shown');
+  assert.ok(w.document.body.classList.contains('ut-staff')); assert.ok(!/profit/i.test(v.float));
   w.document.querySelector('#tabs [data-tab=today]').click(); await wait(200); w.document.querySelector('.st-btn').click(); await wait(30);
   const texts = []; for (let i = 0; i < 10; i++) { const t = w.document.querySelector('.st-text'); if (!t || /All done/.test(w.document.querySelector('.st-title').textContent)) break; texts.push(t.textContent); w.document.querySelector('.st-next').click(); await wait(5); }
   assert.ok(texts.length && !texts.some((t) => /profit|cost/i.test(t)), 'Steps text for staff has no profit/cost: ' + texts.join('|'));
